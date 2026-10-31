@@ -1,0 +1,400 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Capacitor projesi olustur
+        run: |
+          mkdir www
+          cat > www/index.html <<'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="tr">
+          <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+          <title>TCDD Asistanı</title>
+          <style>
+          *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+          body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f2e9d8;color:#222;min-height:100vh}
+          .top{background:#b3261e;color:#fff;padding:14px 16px;font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+          .top .back{font-size:26px;cursor:pointer;padding:0 8px}
+          .top .sp{flex:1}
+          .wrap{padding:16px;max-width:700px;margin:auto}
+          .bigbtn{display:block;width:100%;padding:38px 10px;margin:0 0 18px;border:none;border-radius:20px;font-size:26px;font-weight:700;color:#fff;box-shadow:0 4px 10px #0003}
+          .b1{background:#b3261e}.b2{background:#1f4e8c}.b3{background:#2e7d32;padding:26px 10px}
+          .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px #0002;position:relative}
+          .card.closed{border-left:6px solid #1e63d6}.card.act{border-left:6px solid #2e7d32}
+          .small{font-size:13px;color:#555}
+          .btn{border:none;border-radius:10px;padding:11px 16px;font-size:16px;font-weight:600;background:#1f4e8c;color:#fff}
+          .btn.red{background:#b3261e}.btn.gray{background:#777}.btn.green{background:#2e7d32}
+          .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+          input,textarea{font-size:16px;padding:9px;border:1px solid #aaa;border-radius:8px;width:100%;font-family:inherit}
+          textarea{min-height:70px}
+          .entry b.h{font-size:18px}
+          .entry .l{margin:5px 0;white-space:pre-wrap}
+          .price{display:flex;align-items:center;gap:8px;margin:6px 0}
+          .price span{min-width:130px;font-weight:600}
+          .price input{flex:1}
+          .tot{font-weight:700;font-size:18px;color:#b3261e}
+          .hl{outline:3px solid #f5b800}
+          #fab{position:fixed;right:18px;bottom:90px;width:62px;height:62px;border-radius:50%;background:#2e7d32;color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px #0006;z-index:20;touch-action:none;user-select:none}
+          #modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center;z-index:50}
+          #modal .box{background:#fff;width:100%;max-width:700px;border-radius:18px 18px 0 0;padding:16px;max-height:88vh;overflow:auto}
+          #modal.show{display:flex}
+          .opt{display:block;width:100%;text-align:left;background:#f4f4f4;border:none;border-radius:10px;padding:15px;margin:8px 0;font-size:17px}
+          .calc{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+          .calc button{padding:20px 0;font-size:24px;border:none;border-radius:12px;background:#fff;box-shadow:0 2px 4px #0003}
+          .calc .op{background:#1f4e8c;color:#fff}.calc .eq{background:#2e7d32;color:#fff}.calc .cl{background:#b3261e;color:#fff}
+          #disp{background:#222;color:#fff;border-radius:12px;padding:14px;font-size:30px;text-align:right;min-height:80px;word-break:break-all;margin-bottom:10px}
+          #disp small{display:block;font-size:16px;color:#aaa;min-height:20px}
+          img.prev{width:100%;border-radius:10px}
+          .sum{background:#fff8dc;border:2px solid #d4a800}
+          </style>
+          </head>
+          <body>
+          <div id="app"></div>
+          <div id="fab" style="display:none">✓</div>
+          <div id="modal"><div class="box" id="mbox"></div></div>
+          <input type="file" id="cam" accept="image/*" capture="environment" style="display:none">
+
+          <script>
+          const $=s=>document.querySelector(s);
+          const p2=n=>String(n).padStart(2,'0');
+          const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+          const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+          function load(){try{return Object.assign({files:[],calc:[],key:''},JSON.parse(localStorage.getItem('tcddAsistan')))}catch(e){return{files:[],calc:[],key:''}}}
+          let S=load();
+          function save(){localStorage.setItem('tcddAsistan',JSON.stringify(S))}
+          function fdate(ts){const d=new Date(ts);return p2(d.getDate())+'.'+p2(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)}
+          function fnum(n){return n==null||n===''?'':Number(n).toLocaleString('tr-TR',{maximumFractionDigits:2})}
+          function pnum(s){if(s==null)return null;s=String(s).trim().replace(/\s/g,'').replace(/\./g,'').replace(',','.');if(s==='')return null;const n=parseFloat(s);return isNaN(n)?null:n}
+          const r2=n=>Math.round(n*100)/100;
+          const activeFile=()=>S.files.find(f=>f.active);
+          const getFile=id=>S.files.find(f=>f.id===id);
+
+          let view={name:'home'};
+          function go(v){view=v;render();window.scrollTo(0,0)}
+
+          function openModal(h){$('#mbox').innerHTML=h;$('#modal').classList.add('show')}
+          function closeModal(){$('#modal').classList.remove('show')}
+          $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+
+          function render(){
+            $('#fab').style.display='none';
+            const a=$('#app');
+            if(view.name==='home')a.innerHTML=`<div class="top">TCDD Asistanı<span class="sp"></span><span onclick="settings()" style="font-size:24px">⚙</span></div>
+            <div class="wrap" style="padding-top:30px">
+            <button class="bigbtn b1" onclick="addTcdd()">📷<br>TCDD Ekle</button>
+            <button class="bigbtn b2" onclick="go({name:'files'})">📁<br>Dosyalar</button>
+            <button class="bigbtn b3" onclick="go({name:'calc'})">🧮 Hesap Makinesi</button></div>`;
+            else if(view.name==='files')renderFiles();
+            else if(view.name==='file')renderFile();
+            else if(view.name==='calc')renderCalc();
+          }
+
+          /* ---------- Ayarlar ---------- */
+          function settings(){openModal(`<h3>Ayarlar</h3>
+          <p class="small">Fotoğraftaki el yazısını otomatik okumak için Anthropic API anahtarı gerekir. Anahtar yoksa fotoğraf çekilir, bilgileri elle yazarsınız.</p>
+          <input id="keyin" placeholder="sk-ant-..." value="${esc(S.key)}">
+          <div class="row" style="margin-top:12px"><button class="btn green" onclick="S.key=$('#keyin').value.trim();save();closeModal()">Kaydet</button><button class="btn gray" onclick="closeModal()">Kapat</button></div>`)}
+
+          /* ---------- TCDD Ekle ---------- */
+          let pendingImg=null;
+          function addTcdd(){$('#cam').value='';$('#cam').click()}
+          $('#cam').addEventListener('change',e=>{
+            const f=e.target.files[0];if(!f)return;
+            const rd=new FileReader();
+            rd.onload=()=>{const im=new Image();im.onload=()=>{
+              const m=1600,sc=Math.min(1,m/Math.max(im.width,im.height));
+              const c=document.createElement('canvas');c.width=im.width*sc;c.height=im.height*sc;
+              c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+              pendingImg=c.toDataURL('image/jpeg',0.82);
+              openModal(`<h3>Fotoğrafı kontrol et</h3><img class="prev" src="${pendingImg}">
+              <div class="row" style="margin-top:12px"><button class="btn green" onclick="confirmImg()">Tamam</button><button class="btn gray" onclick="closeModal();addTcdd()">Tekrar çek</button><button class="btn red" onclick="closeModal()">İptal</button></div>`);
+            };im.src=rd.result};
+            rd.readAsDataURL(f);
+          });
+          async function confirmImg(){
+            if(!S.key){newEntryForm({});return}
+            openModal('<h3>Okunuyor…</h3><p>Lütfen bekleyin.</p>');
+            try{
+              const prompt='Bu, el yazısıyla doldurulmuş Türkçe bir TCDD "Bakım-Onarım-İmalat Tadilat Formu" fotoğrafı. Sadece şu JSON\'u döndür: {"adres":"","is_tanimi":"","yapilan_islem":"","malzemeler":["1 Adet ..."]}. adres=Adres alanı; is_tanimi=Yapılacak İşin Tanımı; yapilan_islem=Yapılan İşlemler; malzemeler=Kullanılan Malzemeler satır satır, miktarlarıyla. Yazım hatalarını düzelt, anlamı değiştirme. Fiyat yazma. Okunamayanı boş bırak.';
+              const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+                body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1200,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:pendingImg.split(',')[1]}},{type:'text',text:prompt}]}]})});
+              const j=await r.json();
+              if(!r.ok)throw new Error(j.error&&j.error.message||'Hata');
+              const t=j.content.map(x=>x.text||'').join('');
+              const d=JSON.parse(t.match(/\{[\s\S]*\}/)[0]);
+              saveEntry({adres:d.adres||'',tanim:d.is_tanimi||'',islem:d.yapilan_islem||'',malz:(d.malzemeler||[]).filter(x=>x)});
+              closeModal();go({name:'file',id:activeFile().id,scrollLast:true});
+            }catch(err){
+              alert('Otomatik okuma başarısız: '+err.message+'\nBilgileri elle girebilirsiniz.');
+              newEntryForm({});
+            }
+          }
+          function entryFormHtml(d,onsave){return `<h3>${onsave==='saveNew'?'Bilgileri gir':'Maddeyi düzenle'}</h3>
+          <label class="small">Adres</label><input id="f_adres" value="${esc(d.adres)}">
+          <label class="small">Yapılacak işin tanımı</label><textarea id="f_tanim">${esc(d.tanim)}</textarea>
+          <label class="small">Yapılan işlem</label><textarea id="f_islem">${esc(d.islem)}</textarea>
+          <label class="small">Kullanılan malzemeler (her satıra bir tane; yoksa boş bırak)</label><textarea id="f_malz" style="min-height:110px">${esc((d.malz||[]).join('\n'))}</textarea>
+          <div class="row" style="margin-top:12px"><button class="btn green" onclick="${onsave}()">Kaydet</button><button class="btn gray" onclick="closeModal()">İptal</button></div>`}
+          function readForm(){return{adres:$('#f_adres').value.trim(),tanim:$('#f_tanim').value.trim(),islem:$('#f_islem').value.trim(),malz:$('#f_malz').value.split('\n').map(x=>x.trim()).filter(x=>x)}}
+          function newEntryForm(d){openModal(entryFormHtml(d,'saveNew'))}
+          function saveNew(){saveEntry(readForm());closeModal();go({name:'file',id:activeFile().id,scrollLast:true})}
+          function saveEntry(d){
+            let f=activeFile();
+            if(!f){f={id:uid(),name:'Dosya '+(S.files.length+1),created:Date.now(),active:true,closed:false,entries:[],summaries:[]};S.files.push(f)}
+            f.entries.push({id:uid(),ts:Date.now(),date:fdate(Date.now()),adres:d.adres,tanim:d.tanim,islem:d.islem,malz:d.malz,malzFiyat:null,iscFiyat:null,toplam:null});
+            save();
+          }
+
+          /* ---------- Dosyalar ---------- */
+          function fileRange(f){
+            if(!f.entries.length)return 'Henüz işlem yok';
+            const ts=f.entries.map(e=>e.ts);return 'Başlangıç: '+fdate(Math.min(...ts))+'  •  Son işlem: '+fdate(Math.max(...ts));
+          }
+          function renderFiles(){
+            let h=`<div class="top"><span class="back" onclick="go({name:'home'})">‹</span>Dosyalar<span class="sp"></span><button class="btn green" onclick="newFile()">+ Dosya</button></div><div class="wrap">`;
+            if(!S.files.length)h+='<p class="small">Henüz dosya yok. "TCDD Ekle" ile ilk fotoğrafı eklediğinizde otomatik açılır ya da yukarıdan dosya ekleyin.</p>';
+            S.files.forEach(f=>{
+              h+=`<div class="card ${f.active?'act':'closed'}" data-id="${f.id}">
+              <div class="row"><b style="font-size:18px;flex:1">${esc(f.name)} ${f.closed?'<span style="color:#1e63d6;font-size:22px">✔</span>':''}</b>
+              <span class="small">${f.active?'Aktif':'Kapalı'}</span>
+              <button class="btn gray" style="padding:6px 12px" onclick="event.stopPropagation();fileMenu('${f.id}')">⋮</button></div>
+              <div class="small">${fileRange(f)}</div><div class="small">${f.entries.length} madde</div></div>`;
+            });
+            $('#app').innerHTML=h+'</div>';
+            document.querySelectorAll('.card[data-id]').forEach(c=>{
+              let t=null,lp=false;
+              const id=c.dataset.id;
+              c.addEventListener('pointerdown',()=>{lp=false;t=setTimeout(()=>{lp=true;fileMenu(id)},550)});
+              ['pointerup','pointerleave','pointermove','pointercancel'].forEach(ev=>c.addEventListener(ev,()=>clearTimeout(t)));
+              c.addEventListener('click',()=>{if(!lp)go({name:'file',id})});
+            });
+          }
+          function newFile(){
+            const n=prompt('Dosya adı:','Dosya '+(S.files.length+1));if(n===null)return;
+            const cur=activeFile();
+            S.files.push({id:uid(),name:n||'Dosya',created:Date.now(),active:!cur,closed:false,entries:[],summaries:[]});
+            save();render();
+          }
+          function fileMenu(id){
+            const f=getFile(id);
+            openModal(`<h3>${esc(f.name)}</h3>
+            ${f.active?`<button class="opt" onclick="switchFile('${id}')">➡ Diğer dosyaya geç</button>`:`<button class="opt" onclick="reactivate('${id}')">♻ Dosyayı tekrar aktif yap</button>`}
+            <button class="opt" onclick="renameFile('${id}')">✏ Adı değiştir</button>
+            <button class="opt" onclick="delFile('${id}')">🗑 Dosyayı sil</button>
+            <button class="opt" onclick="closeModal()">Kapat</button>`);
+          }
+          function renameFile(id){closeModal();const f=getFile(id);const n=prompt('Yeni ad:',f.name);if(n){f.name=n;save();render()}}
+          function switchFile(id){
+            const others=S.files.filter(x=>x.id!==id);
+            let h='<h3>Hangi dosyaya geçilsin?</h3>';
+            others.forEach(o=>h+=`<button class="opt" onclick="doSwitch('${id}','${o.id}')">${esc(o.name)}</button>`);
+            h+=`<button class="opt" onclick="doSwitch('${id}','new')">+ Yeni dosya aç</button><button class="opt" onclick="closeModal()">İptal</button>`;
+            openModal(h);
+          }
+          function doSwitch(from,to){
+            const f=getFile(from);f.active=false;f.closed=true;
+            if(to==='new'){S.files.push({id:uid(),name:'Dosya '+(S.files.length+1),created:Date.now(),active:true,closed:false,entries:[],summaries:[]})}
+            else{const t=getFile(to);t.active=true;t.closed=false}
+            save();closeModal();render();
+          }
+          function reactivate(id){
+            S.files.forEach(x=>{if(x.active){x.active=false;x.closed=true}});
+            const f=getFile(id);f.active=true;f.closed=false;save();closeModal();render();
+          }
+          function delFile(id){
+            const f=getFile(id);
+            openModal(`<h3>"${esc(f.name)}" silinsin mi?</h3><p class="small">Uygulamadan kalkar, ancak bir yedek dosyası telefona kaydedilir.</p>
+            <div class="row"><button class="btn red" onclick="doDel('${id}')">Sil</button><button class="btn gray" onclick="closeModal()">İptal</button></div>`);
+          }
+          function doDel(id){
+            const f=getFile(id);
+            const blob=new Blob([JSON.stringify(f,null,2)],{type:'application/json'});
+            const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+            a.download='TCDD_'+f.name.replace(/[^\w\-]+/g,'_')+'_yedek.json';
+            document.body.appendChild(a);a.click();a.remove();
+            S.files=S.files.filter(x=>x.id!==id);save();closeModal();render();
+          }
+
+          /* ---------- Dosya içi ---------- */
+          function entryTotal(e){
+            if(e.toplam!=null)return e.toplam;
+            return r2((e.malzFiyat||0)+(e.iscFiyat||0));
+          }
+          function renderFile(){
+            const f=getFile(view.id);if(!f){go({name:'files'});return}
+            let h=`<div class="top"><span class="back" onclick="go({name:'files'})">‹</span>${esc(f.name)}${f.closed?' <span style="color:#9cc2ff">✔</span>':''}</div><div class="wrap">
+            <input id="srch" placeholder="🔍 Tarih ara (örn. 02.06.26)" oninput="srch(this.value)" style="margin-bottom:12px">`;
+            (f.summaries||[]).forEach(s=>{
+              h+=`<div class="card sum" onclick="editSummary('${f.id}','${s.id}')"><b>📋 Toplama Formu</b>
+              <div>${esc(s.first)} – ${esc(s.last)}</div><div class="tot">Toplam: ${fnum(s.total)} TL</div><div class="small">Düzenlemek için dokun</div></div>`;
+            });
+            f.entries.forEach((e,i)=>{
+              h+=`<div class="card entry" id="e_${e.id}" data-date="${esc(e.date)}">
+              <div class="row"><b class="h" style="flex:1">${i+1}) ${esc(e.date)}</b>
+              <button class="btn gray" style="padding:5px 10px" onclick="editEntry('${f.id}','${e.id}')">✎</button>
+              <button class="btn red" style="padding:5px 10px" onclick="delEntry('${f.id}','${e.id}')">🗑</button></div>
+              <div class="l"><b>Adres :</b> ${esc(e.adres)}</div>
+              <div class="l"><b>Yapılacak işin tanımı :</b> ${esc(e.tanim)}${e.islem?'\n'+esc(e.islem):''}${e.malz.length?'\n'+e.malz.map(esc).join('\n'):''}</div>
+              ${e.malz.length?`<div class="price"><span>Malzeme Fiyatı :</span><input inputmode="decimal" placeholder="Fiyat" value="${e.malzFiyat!=null?fnum(e.malzFiyat):''}" oninput="setPrice('${f.id}','${e.id}','malzFiyat',this.value)"></div>`:''}
+              <div class="price"><span>İşçilik Fiyatı :</span><input inputmode="decimal" placeholder="Fiyat" value="${e.iscFiyat!=null?fnum(e.iscFiyat):''}" oninput="setPrice('${f.id}','${e.id}','iscFiyat',this.value)"></div>
+              <div class="price"><span>Toplam Fiyat :</span><span class="tot" id="t_${e.id}" style="flex:1">${e.toplam!=null?fnum(e.toplam)+' TL':'Fiyat'}</span>
+              <button class="btn green" onclick="calcTot('${f.id}','${e.id}')">Toplam Fiyat</button></div></div>`;
+            });
+            $('#app').innerHTML=h+'<div style="height:130px"></div></div>';
+            $('#fab').style.display='flex';
+            if(view.scrollLast&&f.entries.length){view.scrollLast=false;setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),50)}
+          }
+          function setPrice(fid,eid,k,v){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            e[k]=pnum(v);e.toplam=null;save();
+            const t=$('#t_'+eid);if(t)t.textContent='Fiyat';
+          }
+          function calcTot(fid,eid){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            e.toplam=r2((e.malz.length?(e.malzFiyat||0):0)+(e.iscFiyat||0));
+            save();$('#t_'+eid).textContent=fnum(e.toplam)+' TL';
+          }
+          function srch(v){
+            document.querySelectorAll('.entry').forEach(x=>x.classList.remove('hl'));
+            v=v.trim();if(!v)return;
+            const el=[...document.querySelectorAll('.entry')].find(x=>x.dataset.date.includes(v));
+            if(el){el.classList.add('hl');el.scrollIntoView({behavior:'smooth',block:'center'})}
+          }
+          function editEntry(fid,eid){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            view.edit={fid,eid};openModal(entryFormHtml(e,'saveEdit'));
+          }
+          function saveEdit(){
+            const e=getFile(view.edit.fid).entries.find(x=>x.id===view.edit.eid);
+            Object.assign(e,readForm());
+            if(!e.malz.length)e.malzFiyat=null;
+            e.toplam=null;save();closeModal();render();
+          }
+          function delEntry(fid,eid){
+            if(!confirm('Bu madde silinsin mi?'))return;
+            const f=getFile(fid);f.entries=f.entries.filter(x=>x.id!==eid);save();render();
+          }
+
+          /* ---------- Toplama ---------- */
+          function startSum(){
+            openModal(`<h3>Tüm veriler toplansın mı?</h3><div class="row"><button class="btn green" onclick="doSum()">Toplansın</button><button class="btn gray" onclick="closeModal()">İptal</button></div>`);
+          }
+          function doSum(){
+            const f=getFile(view.id);
+            if(!f.entries.length){closeModal();alert('Dosyada madde yok.');return}
+            const lines=f.entries.map((e,i)=>({n:i+1,date:e.date,val:entryTotal(e)}));
+            const ts=f.entries.map(e=>e.ts);
+            const s={id:uid(),first:fdate(Math.min(...ts)),last:fdate(Math.max(...ts)),lines,total:r2(lines.reduce((a,l)=>a+l.val,0)),ts:Date.now()};
+            f.summaries=f.summaries||[];f.summaries.push(s);save();
+            closeModal();render();editSummary(f.id,s.id);
+          }
+          function editSummary(fid,sid){
+            const s=getFile(fid).summaries.find(x=>x.id===sid);
+            view.sum={fid,sid};
+            let h=`<h3>📋 Toplama Formu</h3>
+            <label class="small">İlk veri tarihi</label><input id="s_first" value="${esc(s.first)}">
+            <label class="small">Son veri tarihi</label><input id="s_last" value="${esc(s.last)}">
+            <p class="small">Her maddenin toplam fiyatı (yalnızca bunlar toplanır, işçilik ve malzeme ayrıca eklenmez):</p>`;
+            s.lines.forEach((l,i)=>h+=`<div class="price"><span style="min-width:110px">${l.n}) ${esc(l.date)}</span><input inputmode="decimal" class="s_l" data-i="${i}" value="${fnum(l.val)}" oninput="sumRecalc()"></div>`);
+            h+=`<label class="small">Toplam fiyat</label><input id="s_total" value="${fnum(s.total)}" style="font-weight:700;font-size:20px">
+            <div class="row" style="margin-top:12px"><button class="btn green" onclick="saveSum()">Kaydet</button><button class="btn red" onclick="delSum()">Formu sil</button><button class="btn gray" onclick="closeModal()">Kapat</button></div>`;
+            openModal(h);
+          }
+          function sumRecalc(){
+            let t=0;document.querySelectorAll('.s_l').forEach(i=>t+=pnum(i.value)||0);
+            $('#s_total').value=fnum(r2(t));
+          }
+          function saveSum(){
+            const s=getFile(view.sum.fid).summaries.find(x=>x.id===view.sum.sid);
+            s.first=$('#s_first').value;s.last=$('#s_last').value;
+            document.querySelectorAll('.s_l').forEach(i=>s.lines[i.dataset.i].val=pnum(i.value)||0);
+            s.total=pnum($('#s_total').value)||0;
+            save();closeModal();render();
+          }
+          function delSum(){
+            if(!confirm('Form silinsin mi?'))return;
+            const f=getFile(view.sum.fid);f.summaries=f.summaries.filter(x=>x.id!==view.sum.sid);save();closeModal();render();
+          }
+
+          /* sürüklenebilir buton */
+          (function(){
+            const b=$('#fab');let sx,sy,ox,oy,moved=false,drag=false;
+            b.addEventListener('pointerdown',e=>{drag=true;moved=false;sx=e.clientX;sy=e.clientY;const r=b.getBoundingClientRect();ox=r.left;oy=r.top;b.setPointerCapture(e.pointerId)});
+            b.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>6)moved=true;
+              if(moved){b.style.left=Math.max(0,Math.min(innerWidth-62,ox+dx))+'px';b.style.top=Math.max(0,Math.min(innerHeight-62,oy+dy))+'px';b.style.right='auto';b.style.bottom='auto'}});
+            b.addEventListener('pointerup',()=>{drag=false;if(!moved)startSum()});
+          })();
+
+          /* ---------- Hesap makinesi ---------- */
+          let ex='',last='';
+          function renderCalc(){
+            const keys=['C','⌫','(',')','7','8','9','÷','4','5','6','×','1','2','3','−','0','.','=','+'];
+            let h=`<div class="top"><span class="back" onclick="go({name:'home'})">‹</span>Hesap Makinesi</div><div class="wrap">
+            <div id="disp"><small id="dl">${esc(last)}</small><span id="dv">${esc(ex||'0')}</span></div><div class="calc">`;
+            keys.forEach(k=>{const c=k==='='?'eq':k==='C'||k==='⌫'?'cl':'÷×−+'.includes(k)?'op':'';h+=`<button class="${c}" onclick="ck('${k}')">${k}</button>`});
+            h+=`</div><h3>Geçmiş</h3>`;
+            if(!S.calc.length)h+='<p class="small">Henüz işlem yok.</p>';
+            else h+=`<button class="btn red" style="margin-bottom:8px" onclick="if(confirm('Tüm geçmiş silinsin mi?')){S.calc=[];save();render()}">Tümünü sil</button>`;
+            S.calc.slice().reverse().forEach(c=>h+=`<div class="card row"><div style="flex:1">${esc(c.e)} = <b>${esc(c.r)}</b></div><button class="btn red" style="padding:5px 10px" onclick="delCalc('${c.id}')">🗑</button></div>`);
+            $('#app').innerHTML=h+'</div>';
+          }
+          function upd(){$('#dv').textContent=ex||'0';$('#dl').textContent=last}
+          function ck(k){
+            if(k==='C'){ex='';last=''}
+            else if(k==='⌫')ex=ex.slice(0,-1);
+            else if(k==='='){
+              if(!ex)return;
+              try{
+                const js=ex.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+                if(!/^[0-9+\-*/.() ]+$/.test(js))throw 0;
+                let r=Function('"use strict";return ('+js+')')();
+                if(!isFinite(r))throw 0;
+                r=Math.round(r*1e10)/1e10;
+                S.calc.push({id:uid(),e:ex,r:String(r)});save();
+                last=ex+' =';ex=String(r);renderCalc();return;
+              }catch(e){last='Hata';ex=''}
+            }else ex+=k;
+            upd();
+          }
+          function delCalc(id){S.calc=S.calc.filter(c=>c.id!==id);save();renderCalc()}
+
+          render();
+          </script>
+          </body>
+          </html>
+          HTMLEOF
+          npm init -y
+          npm i @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "TCDD Asistani" com.tcdd.asistan --web-dir www
+          npx cap add android
+          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <application|' android/app/src/main/AndroidManifest.xml
+          npx cap sync android
+
+      - name: APK derle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TCDD-Asistani-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
