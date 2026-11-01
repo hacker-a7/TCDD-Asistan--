@@ -1,0 +1,1049 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Sabit imza anahtari (guncellemeler eski uygulamanin ustune kurulsun)
+        run: |
+          mkdir -p ~/.android
+          echo "/u3+7QAAAAIAAAABAAAAAQAPYW5kcm9pZGRlYnVna2V5AAABoZdX5HkAAAT/MIIE+zAMBgorBgEEASoCEQEBBIIE6X17atTUmHjVD8wduhkQ3QiMW4L1TF/bgmIS2Mqrnmj2w0LqgWNXcSkgDtIC5zKPQdF3LHBqHT2hsR6Zq+YGr1D2NDTmVDk6EIfqYnV4IVFQH4Pk5TwTXQDUzgPmXJvlMjgALO8pK+j6ANlJ5mP+sPAeiIo2Ytpn0X8L+JZ2GaDGNXlfeUxp8EDoDz5ZKeBLaGwN27jPxYlp3WRvTTtM4ryAvON+Mihdh9huNKqXldoyaUP5X2JRc3yC4WJYJG0p2rnTYdAMRbHzqPFuqxb9FTobIYfCr02uFE01Aj1aPsU2j1tjgbLW5NSZmpbSK1msw+s4VHIvKOtHyLdBoOA+aRFZjyMVYjFcFtEsJggRuOAvWTT7ry+hAAg3JC/E2DFAhVxazKdaJmNM2ehrtNUVDqHPvHVlzuIaD41+D/BYHeeG6HQPyvurCJAKiDDVQhHCRC4nUcJXh/SRIuBoWM4tDs1mh2Oir9Z/7ZySnLnwmjunEx/PEqEbwbFJrF8oSsFp+Xc0PcixbYbIjmQNqF5s1tUkIE6G3R8jC4Q9f0jIrIICXDQMKrwn2mKRMgu2TwCCOteywxLPrRkpjQ5wCwtMPgzK5Gzv0GlK7xbjCe82PFRvRoo2wWK1jPl/w/u6EfrURzB8LFj9lT2tRlhHtlFeNDq6OlJwFQk/6EMeqxEPpsibCdncv2X7xCzgsw/A/4RW4h/LeSDz3R767cB7EQsEfPYj/tht5fFgXHLiUVaPC31Ag20PE96mnYIxpXUHjaP5oyHSh+FyTmIocE788cdUdAJF+jMU8xe2XZwC2eig+DBrhOeNVhbKSlDun3eq4EbmYFNUdNY0hIVAika++l2no2WUpYRF7cK6eD7qXOaFOZ3ld6u63I33WnixsJsr6de7+v/mqNYkRniQ7a8G86naeVZA2gJGeZS+P4m98FnlF/c0jA0YWFjlyrnhIm+WImYpk2qCBty0t6bqfuf4mHyKv4BDtLWLr2E4Xm/ZvbUHgmz9wvy+rAHagSZBBLV4JyDmUd4dcxmXbxRBVizVHqZJcl2VEE2sqg3wsCUnbIPN8XAY++05LHep/Tgb5fHl9TxalSgeMc5AF/CjSlmj5LrI7Gh0WTT2/Aff/zrfdPQfnebhFz71OyCHG7KJTRo4Z0qQp2Ef1g1nnEndg4ImKecFkzF/uKrbTstTZiNPdwMAHJG1CCqsE3/Iq0kMIrl6yoPHKX77OKxJsksm8uaYfJqYbWMxxIlyZ3WXQLHGGgrxZXgYvrn7+XZy7EdM3W4gRfZc/Nolq+DligiXQzIUPqbXLP0U5UUyRNw1gHt7oSVJWrWECldX1EaPRlTRVxolIGrfSRuA5YmhkaYbyBOSEFlpzPxHPuCGzJlcWfaNO3JnTwQDV32e/ZMERIBPJU7+w7xkOBfSI5Z1u+9q4BWtxhh1x6ieRG9Zg+cdkobMZ9OHv241pbfLLKxGNqT7MXi5tP894CPgfpAAOdG4tAjEXT4j01e7NWP+zKKa0sgcGwZXTn6T338qqOWDE5GY4Ch61xE1tw5cJQ+NMVjhj3rokpaSaFKWSETC445ApX8muSX3eZ0yR19c0DmRK1+QQmQ5A7l8/9Vf0XrcZRJlRxMeG3nbZCEjHO+3DLdrRDmkAPTk0V+nOkWgUDi+Mv7vgQTLRS3g8Wzo5iKZ3v7UVgAAAAEABVguNTA5AAADFzCCAxMwggH7oAMCAQICCDrGVCjLV3jlMA0GCSqGSIb3DQEBDAUAMDcxCzAJBgNVBAYTAlVTMRAwDgYDVQQKEwdBbmRyb2lkMRYwFAYDVQQDEw1BbmRyb2lkIERlYnVnMCAXDTI2MTEwMTEzNDEyMloYDzIwNTQwMzE5MTM0MTIyWjA3MQswCQYDVQQGEwJVUzEQMA4GA1UEChMHQW5kcm9pZDEWMBQGA1UEAxMNQW5kcm9pZCBEZWJ1ZzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMnFVliOhDdptM61fEhhAOI5hqKqrxC0ptUPj2te349HtghN4ckbh5dQwJQJGA3ynFHAFaaOYHNovOo4Fojj+nPSldDb5YtHGUXFyPZV7DQjDrLHjEWcbEhx81Ze38AoInlqVf+qt0llX54NMEBmC9hh5QUsqs40bZPlsaXBLpvlJO1iFOoKpi1dyaTs3B3zuxS7dbrILOQnKPmqqn2cN9I7Qts26mWTdxZ61SQfgur6sUi7ePavIykNrRpZMnNjp7UOQz9tj7+mbw7lRrxmGH89qD6/P/AZHdJr2xbId1qVZfnSRR6b64Bo2m2S5mQiAKxLSE8ImzGHHZenIUVKrY0CAwEAAaMhMB8wHQYDVR0OBBYEFAB3b5oVadM9lbObHH/jDIyze5YxMA0GCSqGSIb3DQEBDAUAA4IBAQAPoz7CYmYVY1FamI9+4SQaA8RRiRqCwSORDKw7eaieiKs5ur/VHQwZXamIcmpmApgTAWHV7XsfdOXhexT/LDgCSq8Zrx1PMDLpNX/4IfAnifx2Csv7jQeCv012UF0Hxojit2jx4lDoqFy5k/6stOf+pSrkwPSYoiy00TMkqowhPUJ2hrOOJvTj0z26AaaxiBLvGvklj9Ohlz8VvdsvCxfAJE5UvOyBfMgskD0qzfOdEiiJ/fGj0Caf4E3wy1o9Bq3YMMnWnRVFs6sqwt6+ohqDJkZDJfNnmlr6e9ngdKvpRcDJZuZGyEw48w4PzHN5obFRdPBPT96wieDK0lHkPNdr8dKkr5+FET8PQgRyoKQKIrOQu5U=" | base64 -d > ~/.android/debug.keystore
+
+      - name: Capacitor projesi olustur
+        run: |
+          mkdir www
+          cat > www/index.html <<'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="tr">
+          <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+          <meta name="theme-color" content="#0f2744">
+          <title>TCDD Asistanı</title>
+          <style>
+          :root{--navy:#0f2744;--navy2:#1d3f6e;--red:#c8102e;--cream:#f5f2ea;--ink:#1c2430;--muted:#6b7686;--line:#e6e1d4;--green:#1f8a5b;--gold:#d9a400;--card:#fff}
+          *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+          html,body{margin:0}
+          body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+          button{font-family:inherit;cursor:pointer}
+          button:active{transform:scale(.97)}
+          svg{display:block}
+          .top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:calc(14px + env(safe-area-inset-top)) 14px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5;box-shadow:0 3px 14px #0f274455;border-bottom:3px solid var(--red)}
+          .top .tt{font-size:19px;font-weight:700;letter-spacing:.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .ibtn{background:#ffffff1f;border:none;color:#fff;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+          .wrap{padding:16px;max-width:720px;margin:auto}
+          .hero{background:linear-gradient(150deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:calc(22px + env(safe-area-inset-top)) 18px 76px;position:relative;border-bottom:4px solid var(--red)}
+          .hero .row1{display:flex;align-items:center;gap:14px}
+          .logo{width:58px;height:58px;filter:drop-shadow(0 4px 8px #0006)}
+          .ht{font-size:25px;font-weight:800;letter-spacing:.3px}
+          .hs{font-size:13px;opacity:.75;margin-top:2px}
+          .hero .ibtn{margin-left:auto}
+          .datechip{position:absolute;left:18px;bottom:42px;font-size:13px;opacity:.85}
+          .home{margin-top:-30px;padding:0 16px 24px;max-width:720px;margin-left:auto;margin-right:auto}
+          .mcard{display:flex;align-items:center;gap:16px;width:100%;border:none;border-radius:22px;padding:20px;margin-bottom:14px;text-align:left;color:#fff;box-shadow:0 8px 22px #0003;position:relative;overflow:hidden}
+          .mcard::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:#ffffff14}
+          .mcard .mi{width:56px;height:56px;border-radius:16px;background:#ffffff26;display:flex;align-items:center;justify-content:center;flex:none}
+          .mcard b{display:block;font-size:21px;letter-spacing:.2px}
+          .mcard small{display:block;font-size:13px;opacity:.88;margin-top:3px}
+          .c-red{background:linear-gradient(135deg,#c8102e,#e23a52)}
+          .c-wine{background:linear-gradient(135deg,#8c1d2f,#c8472f)}
+          .c-navy{background:linear-gradient(135deg,#1d3f6e,#2f66ad)}
+          .c-green{background:linear-gradient(135deg,#17744c,#2aa874);padding:16px 20px}
+          .c-green .mi{width:46px;height:46px}
+          .chip{display:flex;align-items:center;gap:10px;border-radius:16px;padding:12px 14px;margin-bottom:14px;font-weight:600;font-size:14px}
+          .chip.p{background:#fff3cf;border:1.5px solid var(--gold);color:#6b4e00}
+          .chip.f{background:#fde8eb;border:1.5px solid var(--red);color:#8c1d2f}
+          .card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #1c243014;border:1px solid var(--line);position:relative}
+          .card.act{border-left:6px solid var(--green)}
+          .card.closed{border-left:6px solid #2563eb}
+          .small{font-size:13px;color:var(--muted)}
+          .btn{border:none;border-radius:12px;padding:11px 16px;font-size:15px;font-weight:650;background:var(--navy2);color:#fff;display:inline-flex;align-items:center;gap:6px}
+          .btn.red{background:var(--red)}.btn.gray{background:#8a93a1}.btn.green{background:var(--green)}.btn.ghost{background:#eef0f4;color:var(--ink)}.btn.big{width:100%;justify-content:center;padding:16px;font-size:18px;border-radius:16px}
+          .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+          input,textarea{font-size:16px;padding:11px 12px;border:1.5px solid #d6d1c3;border-radius:12px;width:100%;font-family:inherit;background:#fff;color:var(--ink);outline:none}
+          input:focus,textarea:focus{border-color:var(--navy2);box-shadow:0 0 0 3px #1d3f6e22}
+          textarea{min-height:76px;resize:vertical}
+          label.small{display:block;margin:12px 0 5px;font-weight:600}
+          .search{position:relative;margin-bottom:14px}
+          .search input{padding-left:42px}
+          .search svg{position:absolute;left:12px;top:12px;color:var(--muted)}
+          .entry{padding:0;overflow:hidden}
+          .eh{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(90deg,#f1ede1,#fbf9f3);border-bottom:1px solid var(--line)}
+          .num{width:34px;height:34px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+          .edate{font-weight:700;font-size:17px;flex:1}
+          .sbtn{border:none;background:#fff;border:1px solid var(--line);width:36px;height:36px;border-radius:10px;color:var(--navy2);display:flex;align-items:center;justify-content:center}
+          .sbtn.d{color:var(--red)}
+          .eb{padding:12px 14px 14px}
+          .fl{margin:8px 0;white-space:pre-wrap;line-height:1.45}
+          .fl b{color:var(--navy2)}
+          .mal{margin:6px 0 0 0;padding-left:0;list-style:none}
+          .mal li{padding:3px 0 3px 18px;position:relative}
+          .mal li::before{content:"";position:absolute;left:4px;top:11px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+          .pr{display:flex;align-items:center;gap:10px;margin:10px 0}
+          .pr>label{min-width:128px;font-weight:650;font-size:14px;color:var(--navy2)}
+          .inw{position:relative;flex:1}
+          .inw input{padding-right:34px;text-align:right;font-weight:650}
+          .inw em{position:absolute;right:12px;top:11px;font-style:normal;color:var(--muted);font-weight:700}
+          .tbox{margin-top:12px;display:flex;align-items:center;gap:10px;background:#0f27440d;border:1.5px dashed #1d3f6e55;border-radius:14px;padding:10px 12px}
+          .tbox .tl{font-size:12px;color:var(--muted);font-weight:600}
+          .tbox .tv{font-size:21px;font-weight:800;color:var(--red)}
+          .tbox .tw{flex:1}
+          .hl{outline:3px solid var(--gold);outline-offset:2px}
+          .sum{background:linear-gradient(135deg,#fff8dc,#fff3c2);border:1.5px solid var(--gold)}
+          .sum .tot{font-size:22px;font-weight:800;color:var(--red)}
+          .pend{display:flex;align-items:center;gap:12px;padding:6px 0;color:#6b4e00;font-weight:600}
+          .pend .sp2{width:26px;height:26px;border-radius:50%;border:4px solid #d9a40033;border-top-color:var(--gold);animation:sp .9s linear infinite;flex:none}
+          .failm{color:#8c1d2f;font-weight:600;margin:4px 0 10px;line-height:1.4}
+          #fab{position:fixed;right:18px;bottom:calc(90px + env(safe-area-inset-bottom));width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#17744c,#2aa874);color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 8px 20px #0005;z-index:20;touch-action:none;user-select:none;border:3px solid #fff}
+          #modal{position:fixed;inset:0;background:#0b1626a6;display:none;align-items:flex-end;justify-content:center;z-index:50;backdrop-filter:blur(2px)}
+          #modal.show{display:flex}
+          #modal .box{background:#fff;width:100%;max-width:720px;border-radius:24px 24px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;animation:up .22s ease}
+          #modal .box::before{content:"";display:block;width:42px;height:5px;border-radius:3px;background:#d6d1c3;margin:6px auto 12px}
+          #modal h3{margin:4px 0 8px;font-size:20px;color:var(--navy)}
+          @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+          .opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#f4f2ec;border:none;border-radius:14px;padding:16px;margin:8px 0;font-size:16px;font-weight:600;color:var(--ink)}
+          img.prev{width:100%;border-radius:14px;border:1px solid var(--line)}
+          #loader{position:fixed;inset:0;background:#0b1626d9;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:90;gap:18px;text-align:center;padding:30px}
+          #loader.show{display:flex}
+          .spin{width:54px;height:54px;border-radius:50%;border:5px solid #ffffff33;border-top-color:#fff;animation:sp 0.9s linear infinite}
+          @keyframes sp{to{transform:rotate(360deg)}}
+          #toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(30px);background:#111d;color:#fff;padding:12px 20px;border-radius:30px;font-size:15px;opacity:0;transition:.25s;z-index:99;pointer-events:none;max-width:88%;text-align:center}
+          #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+          /* sesli ekleme */
+          .tip{background:#e8f0fb;border:1px solid #c5d6ee;color:#1d3f6e;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.45;margin-bottom:14px}
+          .vf{background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px 14px;margin-bottom:14px;box-shadow:0 2px 10px #1c243010}
+          .vh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+          .vh b{color:var(--navy2);font-size:16px}
+          .mic{width:48px;height:48px;border-radius:50%;border:none;background:var(--navy2);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 3px 10px #1d3f6e55}
+          .mic.on{background:var(--red);animation:pulse 1.1s ease-in-out infinite}
+          @keyframes pulse{0%{box-shadow:0 0 0 0 #c8102e88}70%{box-shadow:0 0 0 16px #c8102e00}100%{box-shadow:0 0 0 0 #c8102e00}}
+          .lst{font-size:13px;font-weight:600;color:var(--red);min-height:18px;margin:2px 0 6px}
+          .bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#f5f2eaf2;border-top:1px solid var(--line);z-index:6}
+          #disp{background:linear-gradient(150deg,#0f2744,#1d3f6e);color:#fff;border-radius:22px;padding:18px;text-align:right;min-height:112px;word-break:break-all;margin-bottom:14px;box-shadow:0 6px 18px #0f274455;display:flex;flex-direction:column;justify-content:flex-end}
+          #disp small{font-size:17px;opacity:.65;min-height:22px}
+          #disp .v{font-size:38px;font-weight:700}
+          .calc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+          .calc button{padding:20px 0;font-size:24px;border:none;border-radius:16px;background:#fff;color:var(--ink);box-shadow:0 2px 6px #1c24301f;font-weight:600}
+          .calc .op{background:var(--navy2);color:#fff}.calc .eq{background:var(--green);color:#fff}.calc .cl{background:#fde8eb;color:var(--red)}
+
+          /* açılış ekranı */
+          #splash{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:radial-gradient(circle at 50% 36%,#1f4577 0%,#0f2744 52%,#07162a 100%);color:#fff;transition:opacity .4s ease;overflow:hidden}
+          #splash.out{opacity:0;pointer-events:none}
+          #splash::before,#splash::after{content:"";position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#c8102e,transparent);opacity:.9}
+          #splash::before{top:calc(28px + env(safe-area-inset-top))}
+          #splash::after{bottom:calc(28px + env(safe-area-inset-bottom))}
+          .slogo{width:132px;height:132px;filter:drop-shadow(0 10px 24px #000a) drop-shadow(0 0 28px #3a6bb577);animation:sLogo .9s cubic-bezier(.2,.9,.3,1.2) both}
+          .sglow{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,#3a6bb533,transparent 68%);top:calc(50% - 250px);animation:sFade 1.4s ease both}
+          .stitle{margin:34px 0 0;font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:clamp(27px,8vw,38px);line-height:1.2;letter-spacing:.8px;text-wrap:balance;text-shadow:0 3px 14px #000a;animation:sUp .9s ease .5s both}
+          .stitle span{display:block;background:linear-gradient(180deg,#fff 45%,#dbe8fb 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+          .sdiv{display:flex;align-items:center;gap:12px;margin:20px 0 16px;animation:sFade .8s ease .95s both}
+          .sdiv i{display:block;height:2px;width:0;background:linear-gradient(90deg,transparent,#e23a52);animation:sLine .9s ease 1s forwards}
+          .sdiv i:last-child{background:linear-gradient(90deg,#e23a52,transparent)}
+          .sdiv b{width:11px;height:11px;transform:rotate(45deg);background:#c8102e;box-shadow:0 0 14px #e23a52}
+          .ssub{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:clamp(16px,4.6vw,20px);letter-spacing:1.4px;color:#a9c1e3;animation:sUp .9s ease 1.25s both}
+          @keyframes sLogo{from{opacity:0;transform:scale(.55) translateY(16px)}to{opacity:1;transform:none}}
+          @keyframes sUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+          @keyframes sFade{from{opacity:0}to{opacity:1}}
+          @keyframes sLine{to{width:68px}}
+          </style>
+          </head>
+          <body>
+          <div id="splash"></div>
+          <div id="app"></div>
+          <div id="fab"></div>
+          <div id="modal"><div class="box" id="mbox"></div></div>
+          <div id="loader"><div class="spin"></div><div id="ltext" style="font-size:18px;font-weight:600">Yükleniyor…</div></div>
+          <div id="toast"></div>
+          <input type="file" id="cam" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="restore" accept=".json,application/json" style="display:none">
+
+          <script>
+          /* ===== sabitler ===== */
+          // Yerleşik yedek anahtar. Ayarlar'a yazılan anahtar her zaman önce kullanılır; Ayarlar boşsa bu kullanılır.
+          const EMBED='AQ.Ab8RN6JVjTPY2vM4opReUleLktGUHAbkZ4hg8yTzESfEnMq_Dw';
+          const FALLBACK_MODELS=['gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-2.5-flash','gemini-2.5-flash-lite'];
+          const FONT='system-ui,Roboto,"Segoe UI",Arial,sans-serif';
+          const I={
+          cam:'<path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/>',
+          mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>',
+          folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+          calc:'<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7.5h8M8 12h1M12 12h1M16 12h0M8 16h1M12 16h1M16 16h0"/>',
+          back:'<path d="M15 5l-7 7 7 7"/>',
+          plus:'<path d="M12 5v14M5 12h14"/>',
+          trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+          edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+          gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+          check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+          search:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+          dots:'<circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>',
+          sw:'<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
+          undo:'<path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2"/>',
+          share:'<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/>',
+          clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+          warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+          retry:'<path d="M20 5v5h-5M4 19v-5h5"/><path d="M5.6 9A7 7 0 0 1 19 10M18.4 15A7 7 0 0 1 5 14"/>'
+          };
+          const ic=(n,s=22)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+          const LOGO='<svg class="logo" viewBox="0 0 48 48"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a6bb5"/><stop offset="1" stop-color="#0b1d36"/></linearGradient></defs><rect width="48" height="48" rx="13" fill="url(#lg)"/><rect x="13.5" y="9" width="21" height="24" rx="6.5" fill="#fff"/><rect x="16.5" y="13" width="15" height="8.5" rx="2.2" fill="#0f2744"/><circle cx="19.5" cy="28" r="2" fill="#c8102e"/><circle cx="28.5" cy="28" r="2" fill="#c8102e"/><path d="M17.5 33l-3.5 6.5M30.5 33l3.5 6.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M10 41.5h28" stroke="#c8102e" stroke-width="3" stroke-linecap="round"/></svg>';
+
+          const $=s=>document.querySelector(s);
+          const p2=n=>String(n).padStart(2,'0');
+          const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+          const CAP=()=>window.Capacitor&&window.Capacitor.Plugins||{};
+          function load(){try{return Object.assign({files:[],calc:[],trash:[],key:'',draft:null,mc:null},JSON.parse(localStorage.getItem('tcddAsistan')))}catch(e){return{files:[],calc:[],trash:[],key:'',draft:null,mc:null}}}
+          let S=load();
+          function save(){try{localStorage.setItem('tcddAsistan',JSON.stringify(S))}catch(e){toast('Kayıt hatası: depolama dolu olabilir')}}
+          try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+          const getKey=()=>(S.key&&S.key.trim())||EMBED;
+          const isDone=e=>!e.status||e.status==='done';
+          function fdate(ts){const d=new Date(ts);return p2(d.getDate())+'.'+p2(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)}
+          function fnum(n){return n==null||n===''?'':Number(n).toLocaleString('tr-TR',{maximumFractionDigits:2})}
+          function pnum(s){if(s==null)return null;s=String(s).trim().replace(/\s/g,'').replace(/\./g,'').replace(',','.');if(s==='')return null;const n=parseFloat(s);return isNaN(n)?null:n}
+          const r2=n=>Math.round(n*100)/100;
+          const activeFile=()=>S.files.find(f=>f.active);
+          const getFile=id=>S.files.find(f=>f.id===id);
+          function ensureActive(){
+            let f=activeFile();
+            if(!f){f={id:uid(),name:'Dosya '+(S.files.length+1),created:Date.now(),active:true,closed:false,entries:[],summaries:[]};S.files.push(f)}
+            return f;
+          }
+          let tt=null;
+          function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
+          function showLoader(t){$('#ltext').textContent=t||'Yükleniyor…';$('#loader').classList.add('show')}
+          function hideLoader(){$('#loader').classList.remove('show')}
+
+          /* ===== görüntü deposu (IndexedDB) – kuyruktaki fotoğraflar uygulama kapansa da kalır ===== */
+          const memImgs={};
+          let _db=null;
+          function idb(){
+            if(_db)return _db;
+            _db=new Promise((res,rej)=>{
+              try{
+                const rq=indexedDB.open('tcddimgs',1);
+                rq.onupgradeneeded=()=>rq.result.createObjectStore('i');
+                rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error);
+              }catch(e){rej(e)}
+            });
+            return _db;
+          }
+          async function idbPut(k,v){memImgs[k]=v;try{const db=await idb();await new Promise((res,rej)=>{const t=db.transaction('i','readwrite');t.objectStore('i').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}catch(e){}}
+          async function idbGet(k){if(memImgs[k])return memImgs[k];try{const db=await idb();return await new Promise((res,rej)=>{const r=db.transaction('i').objectStore('i').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}catch(e){return null}}
+          async function idbDel(k){delete memImgs[k];try{const db=await idb();await new Promise(res=>{const t=db.transaction('i','readwrite');t.objectStore('i').delete(k);t.oncomplete=res;t.onerror=res})}catch(e){}}
+
+          /* ===== gezinme + geri tuşu ===== */
+          let view={name:'home'},stack=[],lastBack=0;
+          function go(v){stack.push(view);view=v;render();window.scrollTo(0,0);try{history.pushState({},'')}catch(e){}}
+          function modalOpen(){return $('#modal').classList.contains('show')}
+          function handleBack(){
+            if($('#splash'))return;
+            if($('#loader').classList.contains('show'))return;
+            if(modalOpen()){closeModal();return}
+            if(stack.length){view=stack.pop();render();return}
+            const now=Date.now();
+            if(now-lastBack<2000){const A=CAP().App;if(A&&A.exitApp)A.exitApp()}
+            else{lastBack=now;toast('Çıkmak için tekrar geri tuşuna basın')}
+          }
+          try{history.pushState({},'');window.addEventListener('popstate',()=>{try{history.pushState({},'')}catch(e){}handleBack()})}catch(e){}
+          function openModal(h){$('#mbox').innerHTML=h;$('#modal').classList.add('show')}
+          function closeModal(){$('#modal').classList.remove('show');if(needRender){needRender=false;softRender()}}
+          $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+          function topbar(title,extra){return `<div class="top"><button class="ibtn" onclick="handleBack()">${ic('back',24)}</button><div class="tt">${title}</div>${extra||''}</div>`}
+
+          let needRender=false;
+          function typing(){const a=document.activeElement;return a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')&&a.id!=='cam'&&a.id!=='restore'}
+          function softRender(){
+            if(modalOpen()||typing()){needRender=true;return}
+            if(view.name==='home'||view.name==='file'||view.name==='files')render();
+          }
+          document.addEventListener('focusout',()=>{setTimeout(()=>{if(needRender&&!typing()&&!modalOpen()){needRender=false;softRender()}},300)});
+
+          function counts(){
+            let p=0,f=0;
+            S.files.forEach(x=>x.entries.forEach(e=>{if(e.status==='pending')p++;else if(e.status==='failed')f++}));
+            return {p,f};
+          }
+          function render(){
+            if(view.name!=='voice')stopMic();
+            $('#fab').style.display='none';
+            const a=$('#app');
+            if(view.name==='home'){
+              const nf=S.files.length,ne=S.files.reduce((s,f)=>s+f.entries.filter(isDone).length,0);
+              const c=counts();
+              const dt=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+              a.innerHTML=`<div class="hero"><div class="row1">${LOGO}<div><div class="ht">TCDD Asistanı</div><div class="hs">Tadilat formu • otomatik kayıt</div></div><button class="ibtn" onclick="settings()">${ic('gear')}</button></div><div class="datechip">${dt}</div></div>
+              <div class="home">
+              ${c.p?`<div class="chip p">${ic('clock',22)}<span>${c.p} form okunuyor, arka planda kaydedilecek</span></div>`:''}
+              ${c.f?`<div class="chip f" onclick="go({name:'files'})">${ic('warn',22)}<span>${c.f} form okunamadı. Dosyalar'dan tekrar deneyin</span></div>`:''}
+              <button class="mcard c-red" onclick="addTcdd()"><span class="mi">${ic('cam',30)}</span><span><b>TCDD Ekle</b><small>Formun fotoğrafını çek, otomatik işlensin</small></span></button>
+              <button class="mcard c-wine" onclick="go({name:'voice'})"><span class="mi">${ic('mic',30)}</span><span><b>TCDD Ekle</b><small>Konuşarak ekle (mikrofon)</small></span></button>
+              <button class="mcard c-navy" onclick="go({name:'files'})"><span class="mi">${ic('folder',30)}</span><span><b>Dosyalar</b><small>${nf} dosya • ${ne} madde</small></span></button>
+              <button class="mcard c-green" onclick="go({name:'calc'})"><span class="mi">${ic('calc',26)}</span><span><b style="font-size:18px">Hesap Makinesi</b></span></button></div>`;
+            }
+            else if(view.name==='files')renderFiles();
+            else if(view.name==='file')renderFile();
+            else if(view.name==='voice')renderVoice();
+            else if(view.name==='calc')renderCalc();
+          }
+
+          /* ===== Ayarlar + yedek ===== */
+          function settings(){
+            let h=`<h3>Ayarlar</h3>
+            <p class="small">El yazısı okuma: <b>${getKey()?'hazır':'anahtar yok'}</b> · Kullanılan anahtar: <b>${S.key&&S.key.trim()?'senin yazdığın':(EMBED?'uygulamadaki yerleşik':'yok')}</b></p>
+            <label class="small">Gemini API anahtarı</label>
+            <p class="small" style="margin:0 0 6px">Buraya yazdığın anahtar her zaman öncelikli kullanılır. Eski anahtar bozulursa yenisini buraya yapıştırman yeter.</p>
+            <input id="keyin" placeholder="Buraya yapıştır" value="${esc(S.key)}">
+            <div class="row" style="margin-top:12px"><button class="btn green" onclick="saveKey()">Kaydet</button><button class="btn ghost" onclick="closeModal()">Kapat</button></div>
+            <h3 style="margin-top:22px">Yedek</h3>
+            <p class="small">Tüm dosyalarını telefona yedekle ya da yedekten geri yükle.</p>
+            <button class="opt" onclick="backupAll()">${ic('share')} Tüm verileri yedekle</button>
+            <button class="opt" onclick="$('#restore').click()">${ic('undo')} Yedekten geri yükle</button>`;
+            if(S.trash.length){
+              h+=`<h3 style="margin-top:22px">Silinen dosyalar (${S.trash.length})</h3>`;
+              S.trash.forEach(f=>h+=`<div class="opt"><span style="flex:1">${esc(f.name)}<div class="small">${f.entries.length} madde</div></span><button class="btn" onclick="restoreFile('${f.id}')">${ic('undo',18)} Geri al</button></div>`);
+            }
+            openModal(h);
+          }
+          function saveKey(){
+            S.key=$('#keyin').value.trim();
+            S.files.forEach(f=>f.entries.forEach(e=>{if(e.status==='failed'&&/anahtar/i.test(e.job&&e.job.err||'')){e.status='pending';e.job.tries=0;e.job.next=0}}));
+            save();closeModal();toast('Kaydedildi');render();kick();
+          }
+          function restoreFile(id){
+            const f=S.trash.find(x=>x.id===id);if(!f)return;
+            S.trash=S.trash.filter(x=>x.id!==id);f.active=false;f.closed=true;S.files.push(f);save();closeModal();render();toast('Dosya geri alındı');
+          }
+          async function backupAll(){
+            try{
+              const data=JSON.stringify({v:1,files:S.files,trash:S.trash},null,1);
+              const bytes=new TextEncoder().encode(data);
+              await shareBytes('TCDD_Asistani_yedek_'+fdate(Date.now()).replace(/\./g,'-')+'.json',bytes,'application/json','TCDD Asistanı yedek');
+            }catch(e){alert('Yedek alınamadı: '+e.message)}
+          }
+          $('#restore').addEventListener('change',async e=>{
+            const f=e.target.files[0];if(!f)return;
+            try{
+              const j=JSON.parse(await f.text());
+              if(!j||!Array.isArray(j.files))throw new Error('Geçersiz yedek dosyası');
+              let n=0;const have=new Set(S.files.map(x=>x.id));
+              j.files.forEach(x=>{if(!have.has(x.id)){x.active=false;x.closed=true;S.files.push(x);n++}});
+              save();closeModal();render();toast(n+' dosya geri yüklendi');
+            }catch(err){alert('Geri yüklenemedi: '+err.message)}
+            e.target.value='';
+          });
+
+          /* ===== Fotoğraftan ekleme: kuyruk ===== */
+          let pendingImg=null;
+          function addTcdd(){$('#cam').value='';$('#cam').click()}
+          $('#cam').addEventListener('change',e=>{
+            const f=e.target.files[0];if(!f)return;
+            const rd=new FileReader();
+            rd.onload=()=>{const im=new Image();im.onload=()=>{
+              const m=2000,sc=Math.min(1,m/Math.max(im.width,im.height));
+              const c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
+              c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+              pendingImg=c.toDataURL('image/jpeg',0.92);
+              openModal(`<h3>Fotoğrafı kontrol et</h3><p class="small">Yazılar net okunuyorsa Tamam'a bas.</p><img class="prev" src="${pendingImg}">
+              <div class="row" style="margin-top:14px"><button class="btn green" onclick="confirmImg()">${ic('check',18)} Tamam</button><button class="btn ghost" onclick="closeModal();addTcdd()">Tekrar çek</button><button class="btn red" onclick="closeModal()">İptal</button></div>`);
+            };im.src=rd.result};
+            rd.readAsDataURL(f);
+          });
+          async function confirmImg(){
+            if(!pendingImg)return;
+            closeModal();
+            const jid=uid(),img=pendingImg;pendingImg=null;
+            await idbPut(jid,img);
+            const f=ensureActive();
+            f.entries.push({id:uid(),ts:Date.now(),date:fdate(Date.now()),adres:'',tanim:'',islem:'',malz:[],malzFiyat:null,iscFiyat:null,toplam:null,status:'pending',job:{img:jid,tries:0,next:0,err:''}});
+            save();
+            toast('Fotoğraf alındı, arka planda okunuyor');
+            render();kick();
+          }
+          const OCR_PROMPT=`Sen, Türkiye'de TCDD / Marmaray vagon bakım atölyelerinden gelen el yazılı "Bakım-Onarım-İmalat Tadilat Formu"nu okuyan uzman bir transkripsiyoncusun.
+          El yazısı özensiz, eğik, bitişik veya silik olabilir. Harfleri tek tek değil, kelimenin ve cümlenin bağlamından, tesisat / vagon bakım dili ve rakam-miktar mantığından yararlanarak en olası doğru şekilde çöz. Sık geçen kelimeler: klozet, klozet taşı, klozet kapağı, iç takım, rezervuar, flex hortum, silikon, musluk, batarya, lavabo, sifon, gider, tıkalı, kırık, arıza, tespit edildi, değiştirildi, giderildi, kullanıma aktif, erkek WC, bay WC, yolcu WC, vagon, atölye, kontrol, montaj, izolasyon, çatı, dere, havluluk, fotoselli, gişe.
+
+          Sadece formun elle yazılmış alanlarını oku, basılı şablon yazılarını (başlıklar, logolar) yok say:
+          - adres: "Adres" alanı
+          - is_tanimi: "Yapılacak İşin Tanımı" alanı
+          - yapilan_islem: "Yapılan İşlemler" alanı
+          - malzemeler: "Kullanılan Malzemeler" alanı; her malzeme ayrı bir dizi elemanı olsun, "1 Adet Klozet Taşı" biçiminde miktarıyla birlikte. Malzeme yazılmamışsa boş dizi.
+          Fiyat, imza, form numarası, tarih ve firma alanlarını alma.
+
+          Kurallar: Düzgün Türkçe imla ve noktalama kullan (cümle başı büyük harf, özel adlar ve kısaltmalar doğru). Anlamı değiştirme, yazılmayan bir şey ekleme, uydurma. Bir kelimeyi hiç çözemiyorsan en olası okumayı yaz. Sadece geçerli JSON döndür, başka metin yazma:
+          {"adres":"","is_tanimi":"","yapilan_islem":"","malzemeler":[]}
+          Fotoğraf bu tür bir form değilse veya hiç okunamıyorsa {"hata":"kısa sebep"} döndür.`;
+          async function gfetch(url,opt,ms){
+            const ac=new AbortController();const t=setTimeout(()=>ac.abort(),ms||40000);
+            try{return await fetch(url,Object.assign({signal:ac.signal},opt||{}))}
+            catch(e){const x=new Error(e&&e.name==='AbortError'?'Zaman aşımı (internet yavaş veya erişim yok)':'İnternet bağlantısı yok veya erişilemiyor');x.net=true;throw x}
+            finally{clearTimeout(t)}
+          }
+          async function modelList(key){
+            if(S.mc&&S.mc.l&&S.mc.l.length&&Date.now()-S.mc.t<12*3600*1000)return S.mc.l;
+            const names=[];let ok=false;
+            try{
+              const r=await gfetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',{headers:{'x-goog-api-key':key}},15000);
+              if(r.ok){
+                ok=true;const j=await r.json();
+                (j.models||[]).forEach(m=>{
+                  const n=(m.name||'').replace('models/','');
+                  if(/^gemini-[\d.]+-flash(-lite)?$/.test(n)&&(m.supportedGenerationMethods||[]).indexOf('generateContent')>=0)names.push(n);
+                });
+              }
+            }catch(e){}
+            names.sort((x,y)=>parseFloat(y.split('-')[1])-parseFloat(x.split('-')[1])||(x.indexOf('lite')>0)-(y.indexOf('lite')>0));
+            FALLBACK_MODELS.forEach(n=>{if(names.indexOf(n)<0)names.push(n)});
+            const l=names.slice(0,8);
+            if(ok){S.mc={t:Date.now(),l:l};save()}
+            return l;
+          }
+          async function ocrCall(key,b64){
+            const models=await modelList(key);
+            const errs=[];let retry=false;
+            for(const m of models){
+              let r,j={};
+              try{
+                r=await gfetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':key},
+                  body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:'image/jpeg',data:b64}},{text:OCR_PROMPT}]}],generationConfig:{temperature:0,responseMimeType:'application/json'}})},50000);
+              }catch(e){errs.push(e.message);retry=true;break}
+              try{j=await r.json()}catch(e){}
+              if(!r.ok){
+                const msg=(j.error&&j.error.message)||('HTTP '+r.status);errs.push(m+': '+msg);
+                if(r.status===401||r.status===403||(r.status===400&&/API key/i.test(msg))){const e=new Error('Anahtar reddedildi: '+msg);e.fatal=true;throw e}
+                if(r.status===404)S.mc=null;
+                if(r.status===429||r.status>=500)retry=true;
+                continue;
+              }
+              const c=(j.candidates||[])[0];
+              const t=((c&&c.content&&c.content.parts)||[]).map(x=>x.text||'').join('');
+              const mm=t.match(/\{[\s\S]*\}/);
+              if(!mm){errs.push(m+': boş yanıt');retry=true;continue}
+              try{return JSON.parse(mm[0])}catch(e){errs.push(m+': okunamayan yanıt');retry=true}
+            }
+            const e=new Error(errs.slice(0,3).join(' | ')||'Okuma yapılamadı');e.retry=retry;throw e;
+          }
+          let running=false,runStart=0,rt=null;
+          function pendingList(){const a=[];S.files.forEach(f=>f.entries.forEach(e=>{if(e.status==='pending'&&e.job)a.push([f,e])}));return a}
+          function failJob(e,msg){e.status='failed';e.job=e.job||{};e.job.err=msg;save()}
+          function stillThere(f,e){return S.files.indexOf(f)>=0&&f.entries.indexOf(e)>=0&&e.status==='pending'}
+          async function processOne(f,e){
+            const key=getKey();
+            if(!key){failJob(e,"Okuma anahtarı yok. Ayarlar'dan Gemini anahtarını yazın.");return}
+            const img=await idbGet(e.job.img);
+            if(!img){failJob(e,'Fotoğraf bulunamadı, elle girebilirsiniz.');return}
+            const tok=uid();e.job.tok=tok;
+            let d;
+            try{d=await ocrCall(key,img.split(',')[1])}
+            catch(err){
+              if(!stillThere(f,e)||e.job.tok!==tok)return;
+              if(err.fatal||!err.retry){failJob(e,err.message);return}
+              e.job.tries=(e.job.tries||0)+1;e.job.err=err.message;
+              if(e.job.tries>=8)failJob(e,err.message);
+              else{e.job.next=Date.now()+Math.min(60000,4000*e.job.tries);save()}
+              return;
+            }
+            if(!stillThere(f,e)||e.job.tok!==tok)return;
+            if(!d||d.hata){failJob(e,'Okunamadı: '+((d&&d.hata)||'boş sonuç'));return}
+            e.adres=String(d.adres||'');e.tanim=String(d.is_tanimi||'');e.islem=String(d.yapilan_islem||'');
+            e.malz=(Array.isArray(d.malzemeler)?d.malzemeler:[]).map(String).filter(x=>x.trim());
+            const jid=e.job.img;e.status='done';e.job=null;save();idbDel(jid);
+            toast('Bir form okundu ve kaydedildi');
+          }
+          async function runQueue(){
+            if(running&&Date.now()-runStart<120000)return;
+            running=true;runStart=Date.now();
+            try{
+              for(let guard=0;guard<50;guard++){
+                const now=Date.now();
+                const it=pendingList().find(x=>(x[1].job.next||0)<=now);
+                if(!it)break;
+                await processOne(it[0],it[1]);
+                runStart=Date.now();
+              }
+            }catch(e){}
+            running=false;updateWake();softRender();
+            const nx=pendingList().map(x=>x[1].job.next||0).filter(t=>t>Date.now());
+            if(nx.length){clearTimeout(rt);rt=setTimeout(kick,Math.max(500,Math.min(...nx)-Date.now()+50))}
+          }
+          function kick(){updateWake();runQueue()}
+          let wl=null;
+          async function updateWake(){
+            try{
+              const need=pendingList().length>0;
+              if(need&&!wl&&navigator.wakeLock){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}
+              else if(!need&&wl){await wl.release();wl=null}
+            }catch(e){}
+          }
+          function resumeAll(){pendingList().forEach(x=>{x[1].job.next=0});running=false;kick()}
+          document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeAll()});
+          window.addEventListener('online',resumeAll);
+          try{const A=CAP().App;if(A&&A.addListener)A.addListener('appStateChange',s=>{if(s&&s.isActive)resumeAll()})}catch(e){}
+          setInterval(()=>{if(pendingList().length)kick()},10000);
+
+          function retryJob(fid,eid){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            e.status='pending';e.job=e.job||{img:null};e.job.tries=0;e.job.next=0;e.job.err='';save();render();kick();
+          }
+
+          /* ===== Elle / sesle form ===== */
+          function entryFormHtml(d,onsave){return `<h3>${onsave==='saveEdit'?'Maddeyi düzenle':'Bilgileri gir'}</h3>
+          <label class="small">Adres</label><input id="f_adres" value="${esc(d.adres)}">
+          <label class="small">Yapılacak işin tanımı</label><textarea id="f_tanim">${esc(d.tanim)}</textarea>
+          <label class="small">Yapılan işlem</label><textarea id="f_islem">${esc(d.islem)}</textarea>
+          <label class="small">Kullanılan malzemeler (her satıra bir tane; yoksa boş bırak)</label><textarea id="f_malz" style="min-height:110px">${esc((d.malz||[]).join('\n'))}</textarea>
+          <div class="row" style="margin-top:14px"><button class="btn green" onclick="${onsave}()">Kaydet</button><button class="btn ghost" onclick="closeModal()">İptal</button></div>`}
+          function readFormVals(){return{adres:$('#f_adres').value.trim(),tanim:$('#f_tanim').value.trim(),islem:$('#f_islem').value.trim(),malz:$('#f_malz').value.split('\n').map(x=>x.trim()).filter(x=>x)}}
+          function saveEntry(d){
+            const f=ensureActive();
+            f.entries.push({id:uid(),ts:Date.now(),date:fdate(Date.now()),adres:d.adres,tanim:d.tanim,islem:d.islem,malz:d.malz,malzFiyat:null,iscFiyat:null,toplam:null});
+            save();return f;
+          }
+
+          /* ===== Sesle ekleme ===== */
+          const vs={field:null,want:false,nat:false,web:null,base:'',sep:' ',fail:0};
+          const SR=()=>CAP().SpeechRecognition;
+          function renderVoice(){
+            const d=S.draft||{};
+            const fld=(k,label,rows)=>`<div class="vf"><div class="vh"><b>${label}</b><button class="mic" id="m_${k}" onclick="toggleMic('${k}')">${ic('mic',24)}</button></div><div class="lst" id="s_${k}"></div><textarea id="v_${k}" rows="${rows}" oninput="draftSave()">${esc(d[k]||'')}</textarea></div>`;
+            $('#app').innerHTML=topbar('Konuşarak Ekle')+`<div class="wrap"><div class="tip">Mikrofon simgesine bas ve konuş. Tekrar basınca dinleme durur. Yazıyı istediğin gibi düzeltebilirsin. En son <b>Dosyaya kaydet</b>'e bas.</div>`
+            +fld('adres','Adres',2)+fld('tanim','Yapılacak işin tanımı',3)+fld('islem','Yapılan işlem',3)+fld('malz','Kullanılan malzemeler (her satıra bir tane)',4)
+            +`<div style="height:100px"></div></div><div class="bar"><button class="btn green big" onclick="saveVoice()">${ic('check',22)} Dosyaya kaydet</button></div>`;
+          }
+          function draftSave(){
+            S.draft={adres:($('#v_adres')||{}).value||'',tanim:($('#v_tanim')||{}).value||'',islem:($('#v_islem')||{}).value||'',malz:($('#v_malz')||{}).value||''};
+            save();
+          }
+          function saveVoice(){
+            stopMic();
+            const d={adres:$('#v_adres').value.trim(),tanim:$('#v_tanim').value.trim(),islem:$('#v_islem').value.trim(),malz:$('#v_malz').value.split('\n').map(x=>x.trim()).filter(x=>x)};
+            if(!d.adres&&!d.tanim&&!d.islem&&!d.malz.length){toast('Form boş');return}
+            const f=saveEntry(d);S.draft=null;save();
+            toast('Dosyaya kaydedildi');
+            view={name:'file',id:f.id,scrollLast:true};render();window.scrollTo(0,0);
+          }
+          function setLst(k,t){const el=$('#s_'+k);if(el)el.textContent=t||''}
+          function micUI(){
+            document.querySelectorAll('.mic').forEach(b=>b.classList.remove('on'));
+            ['adres','tanim','islem','malz'].forEach(k=>setLst(k,''));
+            if(vs.want&&vs.field){const b=$('#m_'+vs.field);if(b)b.classList.add('on');setLst(vs.field,'Dinleniyor… durdurmak için mikrofona bas')}
+          }
+          function fmtSpeech(t,fresh){
+            t=String(t||'').trim();if(!t)return t;
+            return fresh?t.charAt(0).toLocaleUpperCase('tr')+t.slice(1):t;
+          }
+          function applyPartial(t){
+            const el=$('#v_'+vs.field);if(!el||!t)return;
+            vs.fail=0;
+            const fresh=!vs.base||vs.sep==='\n';
+            el.value=vs.base?vs.base+vs.sep+fmtSpeech(t,fresh):fmtSpeech(t,true);
+            draftSave();
+          }
+          function commitBase(){const el=$('#v_'+vs.field);vs.base=el?el.value.trimEnd():''}
+          async function toggleMic(k){
+            if(vs.want&&vs.field===k){await stopMic();return}
+            if(vs.want)await stopMic();
+            startMic(k);
+          }
+          async function startMic(k){
+            vs.field=k;vs.sep=k==='malz'?'\n':' ';vs.want=true;vs.fail=0;commitBase();micUI();
+            const P=SR();
+            if(P){
+              try{
+                const av=await P.available();
+                if(av&&av.available===false)throw new Error('yok');
+                let perm=await P.checkPermissions();
+                if(!perm||perm.speechRecognition!=='granted')perm=await P.requestPermissions();
+                if(!perm||perm.speechRecognition!=='granted'){toast('Mikrofon izni gerekli');vs.want=false;micUI();return}
+                vs.nat=true;
+                if(!vs.listener){vs.listener=true;P.addListener('partialResults',d=>{if(vs.want&&vs.nat){const t=(d&&d.matches&&d.matches[0])||'';applyPartial(t)}})}
+                nativeLoop();return;
+              }catch(e){vs.nat=false}
+            }
+            const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+            if(R){
+              try{
+                const r=new R();r.lang='tr-TR';r.continuous=true;r.interimResults=true;
+                r.onresult=ev=>{let t='';for(let i=0;i<ev.results.length;i++)t+=ev.results[i][0].transcript+' ';applyPartial(t.trim())};
+                r.onend=()=>{if(vs.want&&vs.web===r){commitBase();try{r.start()}catch(e){}}};
+                r.onerror=ev=>{if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){toast('Mikrofon izni verilmedi');stopMic()}};
+                vs.web=r;r.start();return;
+              }catch(e){}
+            }
+            vs.want=false;micUI();
+            const el=$('#v_'+k);if(el)el.focus();
+            toast('Sesle yazma bu cihazda yok. Klavyedeki mikrofon tuşunu kullanın');
+          }
+          async function nativeLoop(){
+            const P=SR();
+            while(vs.want&&vs.nat){
+              try{
+                commitBase();
+                await P.start({language:'tr-TR',maxResults:1,partialResults:true,popup:false});
+              }catch(e){
+                vs.fail++;
+                if(vs.fail>5){toast('Ses algılanamadı, tekrar deneyin');stopMic();return}
+                await sleep(500);continue;
+              }
+              await sleep(600);
+              while(vs.want&&vs.nat){
+                let l=true;try{const s=await P.isListening();l=s&&s.listening!==false}catch(e){}
+                if(!l)break;
+                await sleep(400);
+              }
+              if(!vs.want)break;
+              await sleep(200);
+            }
+          }
+          async function stopMic(){
+            const was=vs.want;vs.want=false;
+            try{const P=SR();if(P&&vs.nat)await P.stop()}catch(e){}
+            try{if(vs.web){const w=vs.web;vs.web=null;w.onend=null;w.stop()}}catch(e){}
+            vs.nat=false;
+            if(was){micUI();if($('#v_adres'))draftSave()}
+          }
+
+          /* ===== Dosyalar ===== */
+          function fileRange(f){
+            const ts=f.entries.filter(isDone).map(e=>e.ts);
+            if(!ts.length)return 'Henüz işlem yok';
+            return 'Başlangıç: '+fdate(Math.min(...ts))+'  •  Son işlem: '+fdate(Math.max(...ts));
+          }
+          function renderFiles(){
+            let h=topbar('Dosyalar',`<button class="btn green" onclick="newFile()">${ic('plus',18)} Dosya</button>`)+'<div class="wrap">';
+            if(!S.files.length)h+='<div class="card"><p class="small" style="margin:0">Henüz dosya yok. "TCDD Ekle" ile ilk kaydı eklediğinizde otomatik açılır ya da yukarıdan dosya ekleyebilirsiniz.</p></div>';
+            S.files.forEach(f=>{
+              const np=f.entries.filter(e=>e.status==='pending').length,nf=f.entries.filter(e=>e.status==='failed').length;
+              h+=`<div class="card ${f.active?'act':'closed'}" data-id="${f.id}">
+              <div class="row"><b style="font-size:18px;flex:1">${esc(f.name)} ${f.closed?`<span style="color:#2563eb;vertical-align:middle">${ic('check',20)}</span>`:''}</b>
+              <span class="small" style="font-weight:700;color:${f.active?'var(--green)':'#2563eb'}">${f.active?'Aktif':'Kapalı'}</span>
+              <button class="sbtn" onclick="event.stopPropagation();fileMenu('${f.id}')">${ic('dots',20)}</button></div>
+              <div class="small" style="margin-top:6px">${fileRange(f)}</div><div class="small">${f.entries.filter(isDone).length} madde${np?' • '+np+' okunuyor':''}${nf?' • '+nf+' okunamadı':''}</div></div>`;
+            });
+            $('#app').innerHTML=h+'</div>';
+            document.querySelectorAll('.card[data-id]').forEach(c=>{
+              let t=null,lp=false;
+              const id=c.dataset.id;
+              c.addEventListener('pointerdown',()=>{lp=false;t=setTimeout(()=>{lp=true;fileMenu(id)},550)});
+              ['pointerup','pointerleave','pointermove','pointercancel'].forEach(ev=>c.addEventListener(ev,()=>clearTimeout(t)));
+              c.addEventListener('click',()=>{if(!lp)go({name:'file',id})});
+            });
+          }
+          function newFile(){
+            const n=prompt('Dosya adı:','Dosya '+(S.files.length+1));if(n===null)return;
+            const cur=activeFile();
+            S.files.push({id:uid(),name:n||'Dosya',created:Date.now(),active:!cur,closed:false,entries:[],summaries:[]});
+            save();render();
+          }
+          function fileMenu(id){
+            const f=getFile(id);
+            openModal(`<h3>${esc(f.name)}</h3>
+            <button class="opt" onclick="shareFile('${id}')">${ic('share')} Paylaş (salt okunur PDF)</button>
+            ${f.active?`<button class="opt" onclick="switchFile('${id}')">${ic('sw')} Diğer dosyaya geç</button>`:`<button class="opt" onclick="reactivate('${id}')">${ic('undo')} Dosyayı tekrar aktif yap</button>`}
+            <button class="opt" onclick="renameFile('${id}')">${ic('edit')} Adı değiştir</button>
+            <button class="opt" style="color:var(--red)" onclick="delFile('${id}')">${ic('trash')} Dosyayı sil</button>`);
+          }
+          function renameFile(id){closeModal();const f=getFile(id);const n=prompt('Yeni ad:',f.name);if(n){f.name=n;save();render()}}
+          function switchFile(id){
+            const others=S.files.filter(x=>x.id!==id);
+            let h='<h3>Hangi dosyaya geçilsin?</h3>';
+            others.forEach(o=>h+=`<button class="opt" onclick="doSwitch('${id}','${o.id}')">${ic('folder')} ${esc(o.name)}</button>`);
+            h+=`<button class="opt" onclick="doSwitch('${id}','new')">${ic('plus')} Yeni dosya aç</button>`;
+            openModal(h);
+          }
+          function doSwitch(from,to){
+            const f=getFile(from);f.active=false;f.closed=true;
+            if(to==='new'){S.files.push({id:uid(),name:'Dosya '+(S.files.length+1),created:Date.now(),active:true,closed:false,entries:[],summaries:[]})}
+            else{const t=getFile(to);t.active=true;t.closed=false}
+            save();closeModal();render();
+          }
+          function reactivate(id){
+            S.files.forEach(x=>{if(x.active){x.active=false;x.closed=true}});
+            const f=getFile(id);f.active=true;f.closed=false;save();closeModal();render();
+          }
+          function delFile(id){
+            const f=getFile(id);
+            openModal(`<h3>"${esc(f.name)}" silinsin mi?</h3><p class="small">Uygulamadan kalkar. Yedeği telefona kaydedilir, ayrıca Ayarlar'dan geri alınabilir.</p>
+            <div class="row"><button class="btn red" onclick="doDel('${id}')">Sil</button><button class="btn ghost" onclick="closeModal()">İptal</button></div>`);
+          }
+          async function backupFile(f){
+            const name='TCDD_'+f.name.replace(/[^\w\-]+/g,'_')+'_yedek.json';
+            const bytes=new TextEncoder().encode(JSON.stringify(f,null,2));
+            try{
+              const C=CAP();
+              if(C.Filesystem){await C.Filesystem.writeFile({path:'TCDD-Asistani/'+name,data:toB64(bytes),directory:'DOCUMENTS',recursive:true});return true}
+            }catch(e){}
+            try{downloadBytes(name,bytes,'application/json');return true}catch(e){return false}
+          }
+          async function doDel(id){
+            const f=getFile(id);
+            const ok=await backupFile(f);
+            f.entries.forEach(e=>{if(e.job&&e.job.img)idbDel(e.job.img)});
+            S.trash.push(f);S.files=S.files.filter(x=>x.id!==id);save();closeModal();render();
+            toast(ok?'Dosya silindi, yedek kaydedildi':"Dosya silindi (Ayarlar'dan geri alınabilir)");
+          }
+
+          /* ===== Dosya içi ===== */
+          function entryTotal(e){
+            if(e.toplam!=null)return e.toplam;
+            return r2((e.malz.length?(e.malzFiyat||0):0)+(e.iscFiyat||0));
+          }
+          function renderFile(){
+            const f=getFile(view.id);if(!f){stack=[];view={name:'files'};render();return}
+            let h=topbar(esc(f.name)+(f.closed?' ✔':''),`<button class="ibtn" onclick="shareFile('${f.id}')">${ic('share',22)}</button>`)+`<div class="wrap">
+            <div class="search">${ic('search',20)}<input id="srch" placeholder="Tarih ara (örn. 02.06.26)" oninput="srch(this.value)"></div>`;
+            (f.summaries||[]).forEach(s=>{
+              h+=`<div class="card sum" onclick="editSummary('${f.id}','${s.id}')"><b>Toplama Formu</b>
+              <div style="margin-top:4px">${esc(s.first)} – ${esc(s.last)}</div><div class="tot">Toplam: ${fnum(s.total)} ₺</div><div class="small">Düzenlemek için dokun</div></div>`;
+            });
+            f.entries.forEach((e,i)=>{
+              const head=`<div class="eh"><div class="num">${i+1}</div><div class="edate">${esc(e.date)}</div>`;
+              if(e.status==='pending'){
+                h+=`<div class="card entry" id="e_${e.id}" data-date="${esc(e.date)}">${head}<button class="sbtn d" onclick="delEntry('${f.id}','${e.id}')">${ic('trash',18)}</button></div>
+                <div class="eb"><div class="pend"><div class="sp2"></div><div>El yazısı okunuyor… Uygulamadan çıksan da devam eder.${e.job&&e.job.tries?`<div class="small">Deneme ${e.job.tries}: ${esc(e.job.err)}</div>`:''}</div></div></div></div>`;
+                return;
+              }
+              if(e.status==='failed'){
+                h+=`<div class="card entry" id="e_${e.id}" data-date="${esc(e.date)}">${head}<button class="sbtn d" onclick="delEntry('${f.id}','${e.id}')">${ic('trash',18)}</button></div>
+                <div class="eb"><div class="failm">${ic('warn',18)} ${esc(e.job&&e.job.err||'Okunamadı')}</div>
+                <div class="row"><button class="btn" onclick="retryJob('${f.id}','${e.id}')">${ic('retry',18)} Tekrar dene</button><button class="btn ghost" onclick="editEntry('${f.id}','${e.id}')">${ic('edit',18)} Elle gir</button></div></div></div>`;
+                return;
+              }
+              h+=`<div class="card entry" id="e_${e.id}" data-date="${esc(e.date)}">${head}
+              <button class="sbtn" onclick="editEntry('${f.id}','${e.id}')">${ic('edit',18)}</button>
+              <button class="sbtn d" onclick="delEntry('${f.id}','${e.id}')">${ic('trash',18)}</button></div>
+              <div class="eb">
+              <div class="fl"><b>Adres :</b> ${esc(e.adres)}</div>
+              <div class="fl"><b>Yapılacak işin tanımı :</b> ${esc(e.tanim)}${e.islem?'\n'+esc(e.islem):''}</div>
+              ${e.malz.length?`<ul class="mal">${e.malz.map(m=>'<li>'+esc(m)+'</li>').join('')}</ul>`:''}
+              ${e.malz.length?`<div class="pr"><label>Malzeme Fiyatı :</label><div class="inw"><input inputmode="decimal" placeholder="Fiyat" value="${e.malzFiyat!=null?fnum(e.malzFiyat):''}" oninput="setPrice('${f.id}','${e.id}','malzFiyat',this.value)"><em>₺</em></div></div>`:''}
+              <div class="pr"><label>İşçilik Fiyatı :</label><div class="inw"><input inputmode="decimal" placeholder="Fiyat" value="${e.iscFiyat!=null?fnum(e.iscFiyat):''}" oninput="setPrice('${f.id}','${e.id}','iscFiyat',this.value)"><em>₺</em></div></div>
+              <div class="tbox"><div class="tw"><div class="tl">Toplam Fiyat :</div><div class="tv" id="t_${e.id}">${e.toplam!=null?fnum(e.toplam)+' ₺':'Fiyat'}</div></div>
+              <button class="btn green" onclick="calcTot('${f.id}','${e.id}')">Toplam Fiyat</button></div></div></div>`;
+            });
+            $('#app').innerHTML=h+'<div style="height:140px"></div></div>';
+            $('#fab').innerHTML=ic('check',32);
+            $('#fab').style.display='flex';
+            if(view.scrollLast&&f.entries.length){view.scrollLast=false;setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),60)}
+          }
+          function setPrice(fid,eid,k,v){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            e[k]=pnum(v);e.toplam=null;save();
+            const t=$('#t_'+eid);if(t)t.textContent='Fiyat';
+          }
+          function calcTot(fid,eid){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            e.toplam=r2((e.malz.length?(e.malzFiyat||0):0)+(e.iscFiyat||0));
+            save();$('#t_'+eid).textContent=fnum(e.toplam)+' ₺';
+          }
+          function srch(v){
+            document.querySelectorAll('.entry').forEach(x=>x.classList.remove('hl'));
+            v=v.trim();if(!v)return;
+            const el=[...document.querySelectorAll('.entry')].find(x=>x.dataset.date.includes(v));
+            if(el){el.classList.add('hl');el.scrollIntoView({behavior:'smooth',block:'center'})}
+          }
+          function editEntry(fid,eid){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            view.edit={fid,eid};openModal(entryFormHtml(e,'saveEdit'));
+          }
+          function saveEdit(){
+            const e=getFile(view.edit.fid).entries.find(x=>x.id===view.edit.eid);
+            Object.assign(e,readFormVals());
+            if(!e.malz.length)e.malzFiyat=null;
+            e.toplam=null;
+            if(e.status&&e.status!=='done'){if(e.job&&e.job.img)idbDel(e.job.img);e.status='done';e.job=null}
+            save();closeModal();render();
+          }
+          function delEntry(fid,eid){
+            if(!confirm('Bu madde silinsin mi?'))return;
+            const f=getFile(fid);const e=f.entries.find(x=>x.id===eid);
+            if(e&&e.job&&e.job.img)idbDel(e.job.img);
+            f.entries=f.entries.filter(x=>x.id!==eid);save();render();
+          }
+
+          /* ===== Toplama ===== */
+          function startSum(){
+            const f=getFile(view.id);const np=f?f.entries.filter(e=>!isDone(e)).length:0;
+            openModal(`<h3>Tüm veriler toplansın mı?</h3>${np?`<p class="small">${np} madde henüz okunmadı, toplamaya dahil edilmeyecek.</p>`:''}<div class="row" style="margin-top:10px"><button class="btn green" onclick="doSum()">Toplansın</button><button class="btn ghost" onclick="closeModal()">İptal</button></div>`);
+          }
+          function doSum(){
+            const f=getFile(view.id);
+            const es=f.entries.filter(isDone);
+            if(!es.length){closeModal();toast('Dosyada madde yok');return}
+            const lines=es.map((e,i)=>({n:f.entries.indexOf(e)+1,date:e.date,val:entryTotal(e)}));
+            const ts=es.map(e=>e.ts);
+            const s={id:uid(),first:fdate(Math.min(...ts)),last:fdate(Math.max(...ts)),lines,total:r2(lines.reduce((a,l)=>a+l.val,0)),ts:Date.now()};
+            f.summaries=f.summaries||[];f.summaries.push(s);save();
+            closeModal();render();editSummary(f.id,s.id);
+          }
+          function editSummary(fid,sid){
+            const s=getFile(fid).summaries.find(x=>x.id===sid);
+            view.sum={fid,sid};
+            let h=`<h3>Toplama Formu</h3>
+            <label class="small">İlk veri tarihi</label><input id="s_first" value="${esc(s.first)}">
+            <label class="small">Son veri tarihi</label><input id="s_last" value="${esc(s.last)}">
+            <p class="small">Her maddenin toplam fiyatı (yalnızca bunlar toplanır, işçilik ve malzeme ayrıca eklenmez):</p>`;
+            s.lines.forEach((l,i)=>h+=`<div class="pr"><label style="min-width:112px">${l.n}) ${esc(l.date)}</label><div class="inw"><input inputmode="decimal" class="s_l" data-i="${i}" value="${fnum(l.val)}" oninput="sumRecalc()"><em>₺</em></div></div>`);
+            h+=`<label class="small">Toplam fiyat</label><div class="inw"><input id="s_total" value="${fnum(s.total)}" style="font-weight:800;font-size:20px"><em style="top:13px">₺</em></div>
+            <div class="row" style="margin-top:14px"><button class="btn green" onclick="saveSum()">Kaydet</button><button class="btn red" onclick="delSum()">Formu sil</button><button class="btn ghost" onclick="closeModal()">Kapat</button></div>`;
+            openModal(h);
+          }
+          function sumRecalc(){
+            let t=0;document.querySelectorAll('.s_l').forEach(i=>t+=pnum(i.value)||0);
+            $('#s_total').value=fnum(r2(t));
+          }
+          function saveSum(){
+            const s=getFile(view.sum.fid).summaries.find(x=>x.id===view.sum.sid);
+            s.first=$('#s_first').value;s.last=$('#s_last').value;
+            document.querySelectorAll('.s_l').forEach(i=>s.lines[i.dataset.i].val=pnum(i.value)||0);
+            s.total=pnum($('#s_total').value)||0;
+            save();closeModal();render();
+          }
+          function delSum(){
+            if(!confirm('Form silinsin mi?'))return;
+            const f=getFile(view.sum.fid);f.summaries=f.summaries.filter(x=>x.id!==view.sum.sid);save();closeModal();render();
+          }
+          (function(){
+            const b=$('#fab');let sx,sy,ox,oy,moved=false,drag=false;
+            b.addEventListener('pointerdown',e=>{drag=true;moved=false;sx=e.clientX;sy=e.clientY;const r=b.getBoundingClientRect();ox=r.left;oy=r.top;b.setPointerCapture(e.pointerId)});
+            b.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>6)moved=true;
+              if(moved){b.style.left=Math.max(0,Math.min(innerWidth-64,ox+dx))+'px';b.style.top=Math.max(0,Math.min(innerHeight-64,oy+dy))+'px';b.style.right='auto';b.style.bottom='auto'}});
+            b.addEventListener('pointerup',()=>{drag=false;if(!moved)startSum()});
+          })();
+
+          /* ===== Paylaşma: salt okunur PDF ===== */
+          function toB64(u8){let s='';const n=0x8000;for(let i=0;i<u8.length;i+=n)s+=String.fromCharCode.apply(null,u8.subarray(i,i+n));return btoa(s)}
+          function downloadBytes(name,bytes,mime){
+            const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:mime}));a.download=name;
+            document.body.appendChild(a);a.click();a.remove();
+          }
+          async function shareBytes(name,bytes,mime,title){
+            const C=CAP();
+            if(C.Filesystem&&C.Share){
+              try{
+                const r=await C.Filesystem.writeFile({path:'paylas/'+name,data:toB64(bytes),directory:'CACHE',recursive:true});
+                await C.Share.share({title:title,dialogTitle:'Paylaş',files:[r.uri]});
+              }catch(e){if(!/cancel/i.test(String(e&&e.message||e)))throw e}
+              return;
+            }
+            try{
+              const file=new File([bytes],name,{type:mime});
+              if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:title});return}
+            }catch(e){if(e&&e.name==='AbortError')return}
+            downloadBytes(name,bytes,mime);
+          }
+          async function shareFile(id){
+            const f=getFile(id);
+            if(!f.entries.some(isDone)&&!(f.summaries||[]).length){closeModal();toast('Paylaşılacak madde yok');return}
+            closeModal();showLoader('PDF hazırlanıyor…');
+            try{
+              await sleep(60);
+              const bytes=makePdf(buildPages(f));
+              hideLoader();
+              const name='TCDD_'+f.name.replace(/[^\w\-]+/g,'_')+'_'+fdate(Date.now()).replace(/\./g,'-')+'.pdf';
+              await shareBytes(name,bytes,'application/pdf',f.name);
+            }catch(e){hideLoader();alert('PDF oluşturulamadı: '+(e&&e.message||e))}
+          }
+          function wrapText(cx,text,maxW){
+            const out=[];
+            String(text==null?'':text).split('\n').forEach(par=>{
+              if(!par.trim()){out.push('');return}
+              let line='';
+              par.trim().split(/\s+/).forEach(w=>{
+                const t=line?line+' '+w:w;
+                if(cx.measureText(t).width<=maxW){line=t;return}
+                if(line)out.push(line);
+                while(cx.measureText(w).width>maxW&&w.length>1){let k=w.length;while(k>1&&cx.measureText(w.slice(0,k)).width>maxW)k--;out.push(w.slice(0,k));w=w.slice(k)}
+                line=w;
+              });
+              if(line)out.push(line);
+            });
+            return out;
+          }
+          function buildPages(f){
+            const W=1240,H=1754,M=76,LIM=H-120,NAVY='#0f2744',RED='#c8102e',INK='#1c2430',MUT='#6b7686';
+            const pages=[];let cv=null,cx=null,y=0;
+            function newPage(){
+              cv=document.createElement('canvas');cv.width=W;cv.height=H;cx=cv.getContext('2d');
+              cx.fillStyle='#fff';cx.fillRect(0,0,W,H);
+              cx.fillStyle=NAVY;cx.fillRect(0,0,W,96);cx.fillStyle=RED;cx.fillRect(0,96,W,6);
+              cx.textBaseline='middle';cx.fillStyle='#fff';cx.textAlign='left';cx.font='700 38px '+FONT;cx.fillText('TCDD Asistanı',M,50);
+              cx.textAlign='right';cx.font='500 26px '+FONT;cx.fillText(f.name,W-M,50);
+              cx.textBaseline='top';y=102+44;pages.push(cv);
+            }
+            const need=h=>{if(!cv||y+h>LIM)newPage()};
+            function txt(s,font,color,x,align){cx.font=font;cx.fillStyle=color;cx.textAlign=align||'left';cx.fillText(s,x,y)}
+            function para(s,font,color,lh,x,w){
+              cx.font=font;
+              wrapText(cx,s,w).forEach(l=>{need(lh);cx.font=font;txt(l,font,color,x);y+=lh});
+            }
+            function section(label,val){
+              need(34+42);txt(label,'600 25px '+FONT,NAVY,M);y+=36;
+              para(val&&String(val).trim()?val:'—','400 30px '+FONT,INK,43,M,W-2*M);y+=10;
+            }
+            function priceRow(label,v,strong){
+              need(strong?64:52);
+              if(strong){cx.fillStyle='#d9d3c3';cx.fillRect(M,y,W-2*M,2);y+=14}
+              txt(label,(strong?'700 32px ':'600 28px ')+FONT,NAVY,M);
+              const has=v!=null;
+              txt(has?fnum(v)+' ₺':'Fiyat',(strong?'800 36px ':'700 30px ')+FONT,has?(strong?RED:INK):MUT,W-M,'right');
+              y+=strong?52:46;
+            }
+            function estH(e){
+              let t=90;
+              const sec=v=>{cx.font='400 30px '+FONT;return 36+Math.max(1,wrapText(cx,v&&String(v).trim()?v:'—',W-2*M).length)*43+10};
+              t+=sec(e.adres)+sec([e.tanim,e.islem].filter(x=>x&&x.trim()).join('\n'));
+              if(e.malz.length){cx.font='400 30px '+FONT;t+=36+10+52;e.malz.forEach(m=>{t+=Math.max(1,wrapText(cx,m,W-2*M-34).length)*43})}
+              return t+52+64+60;
+            }
+            newPage();
+            const done=f.entries.map((e,i)=>({e,n:i+1})).filter(x=>isDone(x.e));
+            txt(f.name,'800 52px '+FONT,NAVY,M);y+=70;
+            txt(fileRange(f)+'   •   '+done.length+' madde','500 27px '+FONT,MUT,M);y+=60;
+            done.forEach(({e,n})=>{
+              {const hh=estH(e);if(!cv||(y+hh>LIM&&hh<LIM-170))newPage();else need(66+36+43*2)}
+              cx.fillStyle='#f1ede1';cx.fillRect(M,y,W-2*M,68);
+              cx.fillStyle=RED;cx.beginPath();cx.arc(M+38,y+34,27,0,Math.PI*2);cx.fill();
+              cx.textBaseline='middle';cx.fillStyle='#fff';cx.textAlign='center';cx.font='800 30px '+FONT;cx.fillText(String(n),M+38,y+35);
+              cx.textAlign='left';cx.fillStyle=INK;cx.font='700 34px '+FONT;cx.fillText(e.date,M+86,y+35);cx.textBaseline='top';
+              y+=68+22;
+              section('Adres :',e.adres);
+              section('Yapılacak işin tanımı :',[e.tanim,e.islem].filter(x=>x&&x.trim()).join('\n'));
+              if(e.malz.length){
+                need(36+43);txt('Kullanılan malzemeler :','600 25px '+FONT,NAVY,M);y+=36;
+                cx.font='400 30px '+FONT;
+                e.malz.forEach(m=>{
+                  const ls=wrapText(cx,m,W-2*M-34);
+                  ls.forEach((l,i)=>{need(43);if(i===0){cx.fillStyle=RED;cx.beginPath();cx.arc(M+10,y+22,6,0,Math.PI*2);cx.fill()}txt(l,'400 30px '+FONT,INK,M+34);y+=43});
+                });
+                y+=10;
+                need(52*3+30);priceRow('Malzeme Fiyatı :',e.malzFiyat);
+              }
+              need(52*2+30);priceRow('İşçilik Fiyatı :',e.iscFiyat);
+              priceRow('Toplam Fiyat :',e.toplam,true);
+              y+=26;need(10);cx.fillStyle='#e6e1d4';cx.fillRect(M,y,W-2*M,2);y+=34;
+            });
+            (f.summaries||[]).forEach(s=>{
+              newPage();
+              txt('Toplama Formu','800 50px '+FONT,NAVY,M);y+=74;
+              txt('İlk veri tarihi: '+s.first+'     Son veri tarihi: '+s.last,'500 28px '+FONT,MUT,M);y+=58;
+              s.lines.forEach(l=>{
+                need(54);txt(l.n+') '+l.date,'600 30px '+FONT,INK,M);txt(fnum(l.val)+' ₺','700 30px '+FONT,INK,W-M,'right');
+                y+=44;cx.fillStyle='#ece7d8';cx.fillRect(M,y,W-2*M,2);y+=10;
+              });
+              need(110);y+=16;cx.fillStyle='#fff3c2';cx.fillRect(M,y,W-2*M,86);cx.strokeStyle='#d9a400';cx.lineWidth=3;cx.strokeRect(M,y,W-2*M,86);
+              y+=24;txt('Toplam Fiyat','700 34px '+FONT,NAVY,M+24);txt(fnum(s.total)+' ₺','800 40px '+FONT,RED,W-M-24,'right');y+=70;
+            });
+            pages.forEach((p,i)=>{
+              const c=p.getContext('2d');c.textBaseline='middle';c.fillStyle='#8a93a1';c.font='500 24px '+FONT;
+              c.textAlign='left';c.fillText('Oluşturulma: '+fdate(Date.now()),M,H-56);
+              c.textAlign='right';c.fillText('Sayfa '+(i+1)+' / '+pages.length,W-M,H-56);
+            });
+            return pages;
+          }
+          function makePdf(pages){
+            const enc=new TextEncoder();const chunks=[];let len=0;const offs=[];
+            const push=b=>{if(typeof b==='string')b=enc.encode(b);chunks.push(b);len+=b.length};
+            const imgs=pages.map(cv=>{
+              const d=cv.toDataURL('image/jpeg',0.88).split(',')[1];const bin=atob(d);const u=new Uint8Array(bin.length);
+              for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+              return {u,w:cv.width,h:cv.height};
+            });
+            const N=imgs.length;
+            push('%PDF-1.4\n');
+            offs[1]=len;push('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+            const kids=imgs.map((_,i)=>(5+3*i)+' 0 R').join(' ');
+            offs[2]=len;push('2 0 obj\n<< /Type /Pages /Kids ['+kids+'] /Count '+N+' >>\nendobj\n');
+            imgs.forEach((im,i)=>{
+              const a=3+3*i,b=4+3*i,c=5+3*i;
+              offs[a]=len;push(a+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+im.w+' /Height '+im.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+im.u.length+' >>\nstream\n');push(im.u);push('\nendstream\nendobj\n');
+              const cs='q 595 0 0 842 0 0 cm /Im0 Do Q';
+              offs[b]=len;push(b+' 0 obj\n<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream\nendobj\n');
+              offs[c]=len;push(c+' 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 '+a+' 0 R >> >> /Contents '+b+' 0 R >>\nendobj\n');
+            });
+            const total=3+3*N;const xr=len;
+            let x='xref\n0 '+total+'\n0000000000 65535 f \n';
+            for(let i=1;i<total;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+            push(x+'trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xr+'\n%%EOF\n');
+            const out=new Uint8Array(len);let p=0;chunks.forEach(c=>{out.set(c,p);p+=c.length});
+            return out;
+          }
+
+          /* ===== Hesap makinesi ===== */
+          let ex='',last='';
+          function renderCalc(){
+            const keys=['C','⌫','(',')','7','8','9','÷','4','5','6','×','1','2','3','−','0','.','=','+'];
+            let h=topbar('Hesap Makinesi')+`<div class="wrap">
+            <div id="disp"><small id="dl">${esc(last)}</small><span class="v" id="dv">${esc(ex||'0')}</span></div><div class="calc">`;
+            keys.forEach(k=>{const c=k==='='?'eq':k==='C'||k==='⌫'?'cl':'÷×−+'.includes(k)?'op':'';h+=`<button class="${c}" onclick="ck('${k}')">${k}</button>`});
+            h+=`</div><div class="row" style="margin:22px 0 10px"><b style="font-size:18px;flex:1">Geçmiş</b>${S.calc.length?`<button class="btn red" onclick="if(confirm('Tüm geçmiş silinsin mi?')){S.calc=[];save();render()}">Tümünü sil</button>`:''}</div>`;
+            if(!S.calc.length)h+='<p class="small">Henüz işlem yok.</p>';
+            S.calc.slice().reverse().forEach(c=>h+=`<div class="card row" style="padding:12px 14px;margin-bottom:10px"><div style="flex:1">${esc(c.e)} = <b>${esc(c.r)}</b></div><button class="sbtn d" onclick="delCalc('${c.id}')">${ic('trash',18)}</button></div>`);
+            $('#app').innerHTML=h+'</div>';
+          }
+          function upd(){$('#dv').textContent=ex||'0';$('#dl').textContent=last}
+          function ck(k){
+            if(k==='C'){ex='';last=''}
+            else if(k==='⌫')ex=ex.slice(0,-1);
+            else if(k==='='){
+              if(!ex)return;
+              try{
+                const js=ex.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+                if(!/^[0-9+\-*/.() ]+$/.test(js))throw 0;
+                let r=Function('"use strict";return ('+js+')')();
+                if(!isFinite(r))throw 0;
+                r=Math.round(r*1e10)/1e10;
+                S.calc.push({id:uid(),e:ex,r:String(r)});save();
+                last=ex+' =';ex=String(r);renderCalc();return;
+              }catch(e){last='Hata';ex=''}
+            }else ex+=k;
+            upd();
+          }
+          function delCalc(id){S.calc=S.calc.filter(c=>c.id!==id);save();renderCalc()}
+
+          /* ===== açılış ekranı: 3 saniye ===== */
+          (function(){
+            const sp=document.getElementById('splash');if(!sp)return;
+            const logo=LOGO.replace('class="logo"','class="slogo"').replace('id="lg"','id="lgs"').replace('url(#lg)','url(#lgs)');
+            sp.innerHTML='<div class="sglow"></div>'+logo+'<h1 class="stitle"><span>Hüseyin Çalışır</span><span>Hayratıdır</span></h1><div class="sdiv"><i></i><b></b><i></i></div><div class="ssub">Duanızı Eksık Etmeyiniz</div>';
+            setTimeout(()=>{sp.classList.add('out');setTimeout(()=>{if(sp.parentNode)sp.parentNode.removeChild(sp)},450)},3000);
+          })();
+
+          render();
+          resumeAll();
+          </script>
+          </body>
+          </html>
+          HTMLEOF
+          npm init -y
+          npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/filesystem @capacitor/share @capacitor-community/speech-recognition --legacy-peer-deps
+          npx cap init "TCDD Asistani" com.tcdd.asistan --web-dir www
+          if [ -f capacitor.config.json ]; then node -e "const fs=require('fs');const f='capacitor.config.json';const c=JSON.parse(fs.readFileSync(f));c.backgroundColor='#0f2744';fs.writeFileSync(f,JSON.stringify(c,null,2))"; fi
+          npx cap add android
+          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries>\n    <application|' android/app/src/main/AndroidManifest.xml
+          npx cap sync android
+
+      - name: APK derle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TCDD-Asistani-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
