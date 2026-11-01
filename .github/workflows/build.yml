@@ -1,0 +1,603 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Capacitor projesi olustur
+        run: |
+          mkdir www
+          cat > www/index.html <<'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="tr">
+          <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+          <meta name="theme-color" content="#0f2744">
+          <title>TCDD Asistanı</title>
+          <style>
+          :root{--navy:#0f2744;--navy2:#1d3f6e;--red:#c8102e;--red2:#e23a52;--cream:#f5f2ea;--ink:#1c2430;--muted:#6b7686;--line:#e6e1d4;--green:#1f8a5b;--gold:#d9a400;--card:#fff}
+          *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+          html,body{margin:0}
+          body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+          button{font-family:inherit;cursor:pointer}
+          button:active{transform:scale(.97)}
+          svg{display:block}
+
+          /* üst bar */
+          .top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:calc(14px + env(safe-area-inset-top)) 14px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5;box-shadow:0 3px 14px #0f274455;border-bottom:3px solid var(--red)}
+          .top .tt{font-size:19px;font-weight:700;letter-spacing:.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .ibtn{background:#ffffff1f;border:none;color:#fff;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+          .wrap{padding:16px;max-width:720px;margin:auto}
+
+          /* ana ekran */
+          .hero{background:linear-gradient(150deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:calc(22px + env(safe-area-inset-top)) 18px 56px;position:relative;border-bottom:4px solid var(--red)}
+          .hero .row1{display:flex;align-items:center;gap:14px}
+          .logo{width:58px;height:58px;filter:drop-shadow(0 4px 8px #0006)}
+          .ht{font-size:25px;font-weight:800;letter-spacing:.3px}
+          .hs{font-size:13px;opacity:.75;margin-top:2px}
+          .hero .ibtn{margin-left:auto}
+          .datechip{position:absolute;left:18px;bottom:14px;font-size:13px;opacity:.85}
+          .home{margin-top:-30px;padding:0 16px 24px;max-width:720px;margin-left:auto;margin-right:auto}
+          .mcard{display:flex;align-items:center;gap:16px;width:100%;border:none;border-radius:22px;padding:22px 20px;margin-bottom:14px;text-align:left;color:#fff;box-shadow:0 8px 22px #0003;position:relative;overflow:hidden}
+          .mcard::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:#ffffff14}
+          .mcard .mi{width:56px;height:56px;border-radius:16px;background:#ffffff26;display:flex;align-items:center;justify-content:center;flex:none}
+          .mcard b{display:block;font-size:21px;letter-spacing:.2px}
+          .mcard small{display:block;font-size:13px;opacity:.85;margin-top:3px}
+          .c-red{background:linear-gradient(135deg,#c8102e,#e23a52)}
+          .c-navy{background:linear-gradient(135deg,#1d3f6e,#2f66ad)}
+          .c-green{background:linear-gradient(135deg,#17744c,#2aa874);padding:16px 20px}
+          .c-green .mi{width:46px;height:46px}
+
+          /* ortak */
+          .card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #1c243014;border:1px solid var(--line);position:relative}
+          .card.act{border-left:6px solid var(--green)}
+          .card.closed{border-left:6px solid #2563eb}
+          .small{font-size:13px;color:var(--muted)}
+          .btn{border:none;border-radius:12px;padding:11px 16px;font-size:15px;font-weight:650;background:var(--navy2);color:#fff;display:inline-flex;align-items:center;gap:6px}
+          .btn.red{background:var(--red)}.btn.gray{background:#8a93a1}.btn.green{background:var(--green)}.btn.ghost{background:#eef0f4;color:var(--ink)}
+          .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+          input,textarea{font-size:16px;padding:11px 12px;border:1.5px solid #d6d1c3;border-radius:12px;width:100%;font-family:inherit;background:#fff;color:var(--ink);outline:none}
+          input:focus,textarea:focus{border-color:var(--navy2);box-shadow:0 0 0 3px #1d3f6e22}
+          textarea{min-height:76px;resize:vertical}
+          label.small{display:block;margin:12px 0 5px;font-weight:600}
+          .search{position:relative;margin-bottom:14px}
+          .search input{padding-left:42px}
+          .search svg{position:absolute;left:12px;top:12px;color:var(--muted)}
+
+          /* madde */
+          .entry{padding:0;overflow:hidden}
+          .eh{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(90deg,#f1ede1,#fbf9f3);border-bottom:1px solid var(--line)}
+          .num{width:34px;height:34px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+          .edate{font-weight:700;font-size:17px;flex:1}
+          .sbtn{border:none;background:#fff;border:1px solid var(--line);width:36px;height:36px;border-radius:10px;color:var(--navy2);display:flex;align-items:center;justify-content:center}
+          .sbtn.d{color:var(--red)}
+          .eb{padding:12px 14px 14px}
+          .fl{margin:8px 0;white-space:pre-wrap;line-height:1.45}
+          .fl b{color:var(--navy2)}
+          .mal{margin:6px 0 0 0;padding-left:0;list-style:none}
+          .mal li{padding:3px 0 3px 18px;position:relative}
+          .mal li::before{content:"";position:absolute;left:4px;top:11px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+          .pr{display:flex;align-items:center;gap:10px;margin:10px 0}
+          .pr>label{min-width:128px;font-weight:650;font-size:14px;color:var(--navy2)}
+          .inw{position:relative;flex:1}
+          .inw input{padding-right:34px;text-align:right;font-weight:650}
+          .inw em{position:absolute;right:12px;top:11px;font-style:normal;color:var(--muted);font-weight:700}
+          .tbox{margin-top:12px;display:flex;align-items:center;gap:10px;background:#0f27440d;border:1.5px dashed #1d3f6e55;border-radius:14px;padding:10px 12px}
+          .tbox .tl{font-size:12px;color:var(--muted);font-weight:600}
+          .tbox .tv{font-size:21px;font-weight:800;color:var(--red)}
+          .tbox .tw{flex:1}
+          .hl{outline:3px solid var(--gold);outline-offset:2px}
+          .sum{background:linear-gradient(135deg,#fff8dc,#fff3c2);border:1.5px solid var(--gold)}
+          .sum .tot{font-size:22px;font-weight:800;color:var(--red)}
+
+          /* fab */
+          #fab{position:fixed;right:18px;bottom:calc(90px + env(safe-area-inset-bottom));width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#17744c,#2aa874);color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 8px 20px #0005;z-index:20;touch-action:none;user-select:none;border:3px solid #fff}
+
+          /* modal */
+          #modal{position:fixed;inset:0;background:#0b1626a6;display:none;align-items:flex-end;justify-content:center;z-index:50;backdrop-filter:blur(2px)}
+          #modal.show{display:flex}
+          #modal .box{background:#fff;width:100%;max-width:720px;border-radius:24px 24px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;animation:up .22s ease}
+          #modal .box::before{content:"";display:block;width:42px;height:5px;border-radius:3px;background:#d6d1c3;margin:6px auto 12px}
+          #modal h3{margin:4px 0 8px;font-size:20px;color:var(--navy)}
+          @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+          .opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#f4f2ec;border:none;border-radius:14px;padding:16px;margin:8px 0;font-size:16px;font-weight:600;color:var(--ink)}
+          img.prev{width:100%;border-radius:14px;border:1px solid var(--line)}
+
+          /* yükleniyor + toast */
+          #loader{position:fixed;inset:0;background:#0b1626d9;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:90;gap:18px;text-align:center;padding:30px}
+          #loader.show{display:flex}
+          .spin{width:54px;height:54px;border-radius:50%;border:5px solid #ffffff33;border-top-color:#fff;animation:sp 0.9s linear infinite}
+          @keyframes sp{to{transform:rotate(360deg)}}
+          #toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(30px);background:#111d;color:#fff;padding:12px 20px;border-radius:30px;font-size:15px;opacity:0;transition:.25s;z-index:99;pointer-events:none;max-width:88%;text-align:center}
+          #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+          /* hesap makinesi */
+          #disp{background:linear-gradient(150deg,#0f2744,#1d3f6e);color:#fff;border-radius:22px;padding:18px;text-align:right;min-height:112px;word-break:break-all;margin-bottom:14px;box-shadow:0 6px 18px #0f274455;display:flex;flex-direction:column;justify-content:flex-end}
+          #disp small{font-size:17px;opacity:.65;min-height:22px}
+          #disp .v{font-size:38px;font-weight:700}
+          .calc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+          .calc button{padding:20px 0;font-size:24px;border:none;border-radius:16px;background:#fff;color:var(--ink);box-shadow:0 2px 6px #1c24301f;font-weight:600}
+          .calc .op{background:var(--navy2);color:#fff}.calc .eq{background:var(--green);color:#fff}.calc .cl{background:#fde8eb;color:var(--red)}
+          </style>
+          </head>
+          <body>
+          <div id="app"></div>
+          <div id="fab"></div>
+          <div id="modal"><div class="box" id="mbox"></div></div>
+          <div id="loader"><div class="spin"></div><div id="ltext" style="font-size:18px;font-weight:600">El yazısı okunuyor…</div><div class="small" style="color:#cdd6e4">Birkaç saniye sürebilir</div></div>
+          <div id="toast"></div>
+          <input type="file" id="cam" accept="image/*" capture="environment" style="display:none">
+
+          <script>
+          /* ===== sabitler ===== */
+          const MODELS=['gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite','gemini-3.1-flash-lite'];
+          const EMBED='AQ.Ab8RN6JVjTPY2vM4opReUleLktGUHAbkZ4hg8yTzESfEnMq_Dw';
+          const I={
+          cam:'<path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/>',
+          folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+          calc:'<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7.5h8M8 12h1M12 12h1M16 12h0M8 16h1M12 16h1M16 16h0"/>',
+          back:'<path d="M15 5l-7 7 7 7"/>',
+          plus:'<path d="M12 5v14M5 12h14"/>',
+          trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+          edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+          gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+          check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+          search:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+          dots:'<circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>',
+          sw:'<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
+          undo:'<path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2"/>'
+          };
+          const ic=(n,s=22)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+          const LOGO='<svg class="logo" viewBox="0 0 48 48"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a6bb5"/><stop offset="1" stop-color="#0b1d36"/></linearGradient></defs><rect width="48" height="48" rx="13" fill="url(#lg)"/><rect x="13.5" y="9" width="21" height="24" rx="6.5" fill="#fff"/><rect x="16.5" y="13" width="15" height="8.5" rx="2.2" fill="#0f2744"/><circle cx="19.5" cy="28" r="2" fill="#c8102e"/><circle cx="28.5" cy="28" r="2" fill="#c8102e"/><path d="M17.5 33l-3.5 6.5M30.5 33l3.5 6.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M10 41.5h28" stroke="#c8102e" stroke-width="3" stroke-linecap="round"/></svg>';
+
+          const $=s=>document.querySelector(s);
+          const p2=n=>String(n).padStart(2,'0');
+          const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+          const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+          function load(){try{return Object.assign({files:[],calc:[],trash:[],key:''},JSON.parse(localStorage.getItem('tcddAsistan')))}catch(e){return{files:[],calc:[],trash:[],key:''}}}
+          let S=load();
+          function save(){try{localStorage.setItem('tcddAsistan',JSON.stringify(S))}catch(e){toast('Kayıt hatası: depolama dolu olabilir')}}
+          try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+          const getKey=()=>S.key||EMBED;
+          function fdate(ts){const d=new Date(ts);return p2(d.getDate())+'.'+p2(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)}
+          function fnum(n){return n==null||n===''?'':Number(n).toLocaleString('tr-TR',{maximumFractionDigits:2})}
+          function pnum(s){if(s==null)return null;s=String(s).trim().replace(/\s/g,'').replace(/\./g,'').replace(',','.');if(s==='')return null;const n=parseFloat(s);return isNaN(n)?null:n}
+          const r2=n=>Math.round(n*100)/100;
+          const activeFile=()=>S.files.find(f=>f.active);
+          const getFile=id=>S.files.find(f=>f.id===id);
+
+          let tt=null;
+          function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200)}
+          function showLoader(t){$('#ltext').textContent=t||'Yükleniyor…';$('#loader').classList.add('show')}
+          function hideLoader(){$('#loader').classList.remove('show')}
+
+          /* ===== gezinme + geri tuşu ===== */
+          let view={name:'home'},stack=[],lastBack=0;
+          function go(v){stack.push(view);view=v;render();window.scrollTo(0,0);try{history.pushState({},'')}catch(e){}}
+          function home(){stack=[];view={name:'home'};render();window.scrollTo(0,0)}
+          function modalOpen(){return $('#modal').classList.contains('show')}
+          function handleBack(){
+            if($('#loader').classList.contains('show'))return;
+            if(modalOpen()){closeModal();return}
+            if(stack.length){view=stack.pop();render();return}
+            const now=Date.now();
+            if(now-lastBack<2000){
+              const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+              if(A&&A.exitApp)A.exitApp();
+            }else{lastBack=now;toast('Çıkmak için tekrar geri tuşuna basın')}
+          }
+          try{history.pushState({},'');window.addEventListener('popstate',()=>{try{history.pushState({},'')}catch(e){}handleBack()})}catch(e){}
+          try{const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;if(A&&A.addListener)A.addListener('backButton',()=>handleBack())}catch(e){}
+
+          function openModal(h){$('#mbox').innerHTML=h;$('#modal').classList.add('show')}
+          function closeModal(){$('#modal').classList.remove('show')}
+          $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+
+          function topbar(title,extra){return `<div class="top"><button class="ibtn" onclick="handleBack()">${ic('back',24)}</button><div class="tt">${title}</div>${extra||''}</div>`}
+
+          function render(){
+            $('#fab').style.display='none';
+            const a=$('#app');
+            if(view.name==='home'){
+              const nf=S.files.length,ne=S.files.reduce((s,f)=>s+f.entries.length,0);
+              const dt=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+              a.innerHTML=`<div class="hero"><div class="row1">${LOGO}<div><div class="ht">TCDD Asistanı</div><div class="hs">Tadilat formu • otomatik kayıt</div></div><button class="ibtn" onclick="settings()">${ic('gear')}</button></div><div class="datechip">${dt}</div></div>
+              <div class="home">
+              <button class="mcard c-red" onclick="addTcdd()"><span class="mi">${ic('cam',30)}</span><span><b>TCDD Ekle</b><small>Formun fotoğrafını çek, otomatik işlensin</small></span></button>
+              <button class="mcard c-navy" onclick="go({name:'files'})"><span class="mi">${ic('folder',30)}</span><span><b>Dosyalar</b><small>${nf} dosya • ${ne} madde</small></span></button>
+              <button class="mcard c-green" onclick="go({name:'calc'})"><span class="mi">${ic('calc',26)}</span><span><b style="font-size:18px">Hesap Makinesi</b></span></button></div>`;
+            }
+            else if(view.name==='files')renderFiles();
+            else if(view.name==='file')renderFile();
+            else if(view.name==='calc')renderCalc();
+          }
+
+          /* ===== Ayarlar ===== */
+          function settings(){
+            const em=EMBED.length>20&&EMBED.indexOf('__')!==0;
+            let h=`<h3>Ayarlar</h3>
+            <p class="small">El yazısı okuma: <b>${getKey()?'hazır':'anahtar yok'}</b>${em?' (uygulamaya yerleşik)':''}</p>
+            <label class="small">İsteğe bağlı: kendi Gemini API anahtarın</label>
+            <input id="keyin" placeholder="boş bırakabilirsin" value="${esc(S.key)}">
+            <div class="row" style="margin-top:12px"><button class="btn green" onclick="S.key=$('#keyin').value.trim();save();closeModal();toast('Kaydedildi')">Kaydet</button><button class="btn ghost" onclick="closeModal()">Kapat</button></div>`;
+            if(S.trash.length){
+              h+=`<h3 style="margin-top:22px">Silinen dosyalar (${S.trash.length})</h3>`;
+              S.trash.forEach(f=>h+=`<div class="opt"><span style="flex:1">${esc(f.name)}<div class="small">${f.entries.length} madde</div></span><button class="btn" onclick="restoreFile('${f.id}')">${ic('undo',18)} Geri al</button></div>`);
+            }
+            openModal(h);
+          }
+          function restoreFile(id){
+            const f=S.trash.find(x=>x.id===id);if(!f)return;
+            S.trash=S.trash.filter(x=>x.id!==id);f.active=false;f.closed=true;S.files.push(f);save();closeModal();render();toast('Dosya geri alındı');
+          }
+
+          /* ===== TCDD Ekle + el yazısı okuma ===== */
+          let pendingImg=null;
+          function addTcdd(){$('#cam').value='';$('#cam').click()}
+          $('#cam').addEventListener('change',e=>{
+            const f=e.target.files[0];if(!f)return;
+            const rd=new FileReader();
+            rd.onload=()=>{const im=new Image();im.onload=()=>{
+              const m=2000,sc=Math.min(1,m/Math.max(im.width,im.height));
+              const c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
+              c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+              pendingImg=c.toDataURL('image/jpeg',0.92);
+              openModal(`<h3>Fotoğrafı kontrol et</h3><p class="small">Yazılar net okunuyorsa Tamam'a bas.</p><img class="prev" src="${pendingImg}">
+              <div class="row" style="margin-top:14px"><button class="btn green" onclick="confirmImg()">${ic('check',18)} Tamam</button><button class="btn ghost" onclick="closeModal();addTcdd()">Tekrar çek</button><button class="btn red" onclick="closeModal()">İptal</button></div>`);
+            };im.src=rd.result};
+            rd.readAsDataURL(f);
+          });
+          const OCR_PROMPT=`Sen, Türkiye'de TCDD / Marmaray vagon bakım atölyelerinden gelen el yazılı "Bakım-Onarım-İmalat Tadilat Formu"nu okuyan uzman bir transkripsiyoncusun.
+          El yazısı özensiz, eğik, bitişik veya silik olabilir. Harfleri tek tek değil, kelimenin ve cümlenin bağlamından, tesisat / vagon bakım dili ve rakam-miktar mantığından yararlanarak en olası doğru şekilde çöz. Sık geçen kelimeler: klozet, klozet taşı, klozet kapağı, iç takım, rezervuar, flex hortum, silikon, musluk, batarya, lavabo, sifon, gider, tıkalı, kırık, arıza, tespit edildi, değiştirildi, giderildi, kullanıma aktif, erkek WC, bay WC, yolcu WC, vagon, atölye, kontrol, montaj.
+
+          Sadece formun elle yazılmış alanlarını oku, basılı şablon yazılarını (başlıklar, logolar) yok say:
+          - adres: "Adres" alanı
+          - is_tanimi: "Yapılacak İşin Tanımı" alanı
+          - yapilan_islem: "Yapılan İşlemler" alanı
+          - malzemeler: "Kullanılan Malzemeler" alanı; her malzeme ayrı bir dizi elemanı olsun, "1 Adet Klozet Taşı" biçiminde miktarıyla birlikte. Malzeme yazılmamışsa boş dizi.
+          Fiyat, imza, form numarası, tarih ve firma alanlarını alma.
+
+          Kurallar: Düzgün Türkçe imla ve noktalama kullan (cümle başı büyük harf, özel adlar ve kısaltmalar doğru). Anlamı değiştirme, yazılmayan bir şey ekleme, uydurma. Bir kelimeyi hiç çözemiyorsan en olası okumayı yaz. Sadece geçerli JSON döndür, başka metin yazma:
+          {"adres":"","is_tanimi":"","yapilan_islem":"","malzemeler":[]}
+          Fotoğraf bu tür bir form değilse veya hiç okunamıyorsa {"hata":"kısa sebep"} döndür.`;
+          async function confirmImg(){
+            const key=getKey();
+            closeModal();
+            if(!key){toast('Okuma anahtarı yok, bilgileri elle girin');newEntryForm({});return}
+            showLoader('El yazısı okunuyor…');
+            let d=null,err=null;
+            try{d=await ocrCall(key,pendingImg.split(',')[1])}catch(e){err=e}
+            hideLoader();
+            if(!d||d.hata){
+              alert('Otomatik okuma yapılamadı: '+((d&&d.hata)||(err&&err.message)||'bilinmeyen hata')+'\nBilgileri elle girebilirsiniz.');
+              newEntryForm({});return;
+            }
+            saveEntry({adres:d.adres||'',tanim:d.is_tanimi||'',islem:d.yapilan_islem||'',malz:(d.malzemeler||[]).map(String).filter(x=>x.trim())});
+            go({name:'file',id:activeFile().id,scrollLast:true});
+            toast('Form okundu ve kaydedildi');
+          }
+          const FALLBACK_MODELS=['gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-2.5-flash','gemini-2.5-flash-lite'];
+          async function gfetch(url,opt,ms){
+            const ac=new AbortController();const t=setTimeout(()=>ac.abort(),ms||40000);
+            try{return await fetch(url,Object.assign({signal:ac.signal},opt||{}))}
+            catch(e){if(e&&e.name==='AbortError')throw new Error('Zaman aşımı (internet yavaş veya erişim yok)');throw new Error('İnternet bağlantısı yok veya erişilemiyor')}
+            finally{clearTimeout(t)}
+          }
+          async function modelList(key){
+            const names=[];
+            try{
+              const r=await gfetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',{headers:{'x-goog-api-key':key}},15000);
+              if(r.ok){
+                const j=await r.json();
+                (j.models||[]).forEach(m=>{
+                  const n=(m.name||'').replace('models/','');
+                  if(/^gemini-[\d.]+-flash(-lite)?$/.test(n)&&(m.supportedGenerationMethods||[]).indexOf('generateContent')>=0)names.push(n);
+                });
+              }
+            }catch(e){}
+            names.sort((x,y)=>parseFloat(y.split('-')[1])-parseFloat(x.split('-')[1])||(x.indexOf('lite')>0)-(y.indexOf('lite')>0));
+            FALLBACK_MODELS.forEach(n=>{if(names.indexOf(n)<0)names.push(n)});
+            return names.slice(0,8);
+          }
+          async function ocrCall(key,b64){
+            const models=await modelList(key);
+            const errs=[];
+            for(const m of models){
+              try{
+                const r=await gfetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':key},
+                  body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:'image/jpeg',data:b64}},{text:OCR_PROMPT}]}],generationConfig:{temperature:0,responseMimeType:'application/json'}})},45000);
+                let j={};try{j=await r.json()}catch(e){}
+                if(!r.ok){
+                  const msg=(j.error&&j.error.message)||('HTTP '+r.status);
+                  errs.push(m+': '+msg);
+                  if(r.status===401||r.status===403){const e=new Error('Anahtar reddedildi: '+msg);e.fatal=true;throw e}
+                  continue;
+                }
+                const c=(j.candidates||[])[0];
+                const t=((c&&c.content&&c.content.parts)||[]).map(x=>x.text||'').join('');
+                const mm=t.match(/\{[\s\S]*\}/);
+                if(!mm){errs.push(m+': boş yanıt');continue}
+                return JSON.parse(mm[0]);
+              }catch(e){if(e.fatal)throw e;errs.push(m+': '+e.message)}
+            }
+            throw new Error(errs.slice(0,3).join(' | ')||'Okuma yapılamadı');
+          }
+          function entryFormHtml(d,onsave){return `<h3>${onsave==='saveNew'?'Bilgileri gir':'Maddeyi düzenle'}</h3>
+          <label class="small">Adres</label><input id="f_adres" value="${esc(d.adres)}">
+          <label class="small">Yapılacak işin tanımı</label><textarea id="f_tanim">${esc(d.tanim)}</textarea>
+          <label class="small">Yapılan işlem</label><textarea id="f_islem">${esc(d.islem)}</textarea>
+          <label class="small">Kullanılan malzemeler (her satıra bir tane; yoksa boş bırak)</label><textarea id="f_malz" style="min-height:110px">${esc((d.malz||[]).join('\n'))}</textarea>
+          <div class="row" style="margin-top:14px"><button class="btn green" onclick="${onsave}()">Kaydet</button><button class="btn ghost" onclick="closeModal()">İptal</button></div>`}
+          function readFormVals(){return{adres:$('#f_adres').value.trim(),tanim:$('#f_tanim').value.trim(),islem:$('#f_islem').value.trim(),malz:$('#f_malz').value.split('\n').map(x=>x.trim()).filter(x=>x)}}
+          function newEntryForm(d){openModal(entryFormHtml(d,'saveNew'))}
+          function saveNew(){saveEntry(readFormVals());closeModal();go({name:'file',id:activeFile().id,scrollLast:true})}
+          function saveEntry(d){
+            let f=activeFile();
+            if(!f){f={id:uid(),name:'Dosya '+(S.files.length+1),created:Date.now(),active:true,closed:false,entries:[],summaries:[]};S.files.push(f)}
+            f.entries.push({id:uid(),ts:Date.now(),date:fdate(Date.now()),adres:d.adres,tanim:d.tanim,islem:d.islem,malz:d.malz,malzFiyat:null,iscFiyat:null,toplam:null});
+            save();
+          }
+
+          /* ===== Dosyalar ===== */
+          function fileRange(f){
+            if(!f.entries.length)return 'Henüz işlem yok';
+            const ts=f.entries.map(e=>e.ts);return 'Başlangıç: '+fdate(Math.min(...ts))+'  •  Son işlem: '+fdate(Math.max(...ts));
+          }
+          function renderFiles(){
+            let h=topbar('Dosyalar',`<button class="btn green" onclick="newFile()">${ic('plus',18)} Dosya</button>`)+'<div class="wrap">';
+            if(!S.files.length)h+='<div class="card"><p class="small" style="margin:0">Henüz dosya yok. "TCDD Ekle" ile ilk fotoğrafı eklediğinizde otomatik açılır ya da yukarıdan dosya ekleyebilirsiniz.</p></div>';
+            S.files.forEach(f=>{
+              h+=`<div class="card ${f.active?'act':'closed'}" data-id="${f.id}">
+              <div class="row"><b style="font-size:18px;flex:1">${esc(f.name)} ${f.closed?`<span style="color:#2563eb;vertical-align:middle">${ic('check',20)}</span>`:''}</b>
+              <span class="small" style="font-weight:700;color:${f.active?'var(--green)':'#2563eb'}">${f.active?'Aktif':'Kapalı'}</span>
+              <button class="sbtn" onclick="event.stopPropagation();fileMenu('${f.id}')">${ic('dots',20)}</button></div>
+              <div class="small" style="margin-top:6px">${fileRange(f)}</div><div class="small">${f.entries.length} madde</div></div>`;
+            });
+            $('#app').innerHTML=h+'</div>';
+            document.querySelectorAll('.card[data-id]').forEach(c=>{
+              let t=null,lp=false;
+              const id=c.dataset.id;
+              c.addEventListener('pointerdown',()=>{lp=false;t=setTimeout(()=>{lp=true;fileMenu(id)},550)});
+              ['pointerup','pointerleave','pointermove','pointercancel'].forEach(ev=>c.addEventListener(ev,()=>clearTimeout(t)));
+              c.addEventListener('click',()=>{if(!lp)go({name:'file',id})});
+            });
+          }
+          function newFile(){
+            const n=prompt('Dosya adı:','Dosya '+(S.files.length+1));if(n===null)return;
+            const cur=activeFile();
+            S.files.push({id:uid(),name:n||'Dosya',created:Date.now(),active:!cur,closed:false,entries:[],summaries:[]});
+            save();render();
+          }
+          function fileMenu(id){
+            const f=getFile(id);
+            openModal(`<h3>${esc(f.name)}</h3>
+            ${f.active?`<button class="opt" onclick="switchFile('${id}')">${ic('sw')} Diğer dosyaya geç</button>`:`<button class="opt" onclick="reactivate('${id}')">${ic('undo')} Dosyayı tekrar aktif yap</button>`}
+            <button class="opt" onclick="renameFile('${id}')">${ic('edit')} Adı değiştir</button>
+            <button class="opt" style="color:var(--red)" onclick="delFile('${id}')">${ic('trash')} Dosyayı sil</button>`);
+          }
+          function renameFile(id){closeModal();const f=getFile(id);const n=prompt('Yeni ad:',f.name);if(n){f.name=n;save();render()}}
+          function switchFile(id){
+            const others=S.files.filter(x=>x.id!==id);
+            let h='<h3>Hangi dosyaya geçilsin?</h3>';
+            others.forEach(o=>h+=`<button class="opt" onclick="doSwitch('${id}','${o.id}')">${ic('folder')} ${esc(o.name)}</button>`);
+            h+=`<button class="opt" onclick="doSwitch('${id}','new')">${ic('plus')} Yeni dosya aç</button>`;
+            openModal(h);
+          }
+          function doSwitch(from,to){
+            const f=getFile(from);f.active=false;f.closed=true;
+            if(to==='new'){S.files.push({id:uid(),name:'Dosya '+(S.files.length+1),created:Date.now(),active:true,closed:false,entries:[],summaries:[]})}
+            else{const t=getFile(to);t.active=true;t.closed=false}
+            save();closeModal();render();
+          }
+          function reactivate(id){
+            S.files.forEach(x=>{if(x.active){x.active=false;x.closed=true}});
+            const f=getFile(id);f.active=true;f.closed=false;save();closeModal();render();
+          }
+          function delFile(id){
+            const f=getFile(id);
+            openModal(`<h3>"${esc(f.name)}" silinsin mi?</h3><p class="small">Uygulamadan kalkar. Yedeği telefona kaydedilir, ayrıca Ayarlar'dan geri alınabilir.</p>
+            <div class="row"><button class="btn red" onclick="doDel('${id}')">Sil</button><button class="btn ghost" onclick="closeModal()">İptal</button></div>`);
+          }
+          async function backupFile(f){
+            const name='TCDD_'+f.name.replace(/[^\w\-]+/g,'_')+'_yedek.json';
+            const data=JSON.stringify(f,null,2);
+            try{
+              const FS=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem;
+              if(FS){await FS.writeFile({path:'TCDD-Asistani/'+name,data:data,directory:'DOCUMENTS',encoding:'utf8',recursive:true});return true}
+            }catch(e){}
+            try{
+              const blob=new Blob([data],{type:'application/json'});
+              const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+              document.body.appendChild(a);a.click();a.remove();return true;
+            }catch(e){return false}
+          }
+          async function doDel(id){
+            const f=getFile(id);
+            const ok=await backupFile(f);
+            S.trash.push(f);S.files=S.files.filter(x=>x.id!==id);save();closeModal();render();
+            toast(ok?'Dosya silindi, yedek kaydedildi':'Dosya silindi (Ayarlar\'dan geri alınabilir)');
+          }
+
+          /* ===== Dosya içi ===== */
+          function entryTotal(e){
+            if(e.toplam!=null)return e.toplam;
+            return r2((e.malz.length?(e.malzFiyat||0):0)+(e.iscFiyat||0));
+          }
+          function renderFile(){
+            const f=getFile(view.id);if(!f){stack=[];view={name:'files'};render();return}
+            let h=topbar(esc(f.name)+(f.closed?' ✔':''))+`<div class="wrap">
+            <div class="search">${ic('search',20)}<input id="srch" placeholder="Tarih ara (örn. 02.06.26)" oninput="srch(this.value)"></div>`;
+            (f.summaries||[]).forEach(s=>{
+              h+=`<div class="card sum" onclick="editSummary('${f.id}','${s.id}')"><b>Toplama Formu</b>
+              <div style="margin-top:4px">${esc(s.first)} – ${esc(s.last)}</div><div class="tot">Toplam: ${fnum(s.total)} ₺</div><div class="small">Düzenlemek için dokun</div></div>`;
+            });
+            f.entries.forEach((e,i)=>{
+              h+=`<div class="card entry" id="e_${e.id}" data-date="${esc(e.date)}">
+              <div class="eh"><div class="num">${i+1}</div><div class="edate">${esc(e.date)}</div>
+              <button class="sbtn" onclick="editEntry('${f.id}','${e.id}')">${ic('edit',18)}</button>
+              <button class="sbtn d" onclick="delEntry('${f.id}','${e.id}')">${ic('trash',18)}</button></div>
+              <div class="eb">
+              <div class="fl"><b>Adres :</b> ${esc(e.adres)}</div>
+              <div class="fl"><b>Yapılacak işin tanımı :</b> ${esc(e.tanim)}${e.islem?'\n'+esc(e.islem):''}</div>
+              ${e.malz.length?`<ul class="mal">${e.malz.map(m=>'<li>'+esc(m)+'</li>').join('')}</ul>`:''}
+              ${e.malz.length?`<div class="pr"><label>Malzeme Fiyatı :</label><div class="inw"><input inputmode="decimal" placeholder="Fiyat" value="${e.malzFiyat!=null?fnum(e.malzFiyat):''}" oninput="setPrice('${f.id}','${e.id}','malzFiyat',this.value)"><em>₺</em></div></div>`:''}
+              <div class="pr"><label>İşçilik Fiyatı :</label><div class="inw"><input inputmode="decimal" placeholder="Fiyat" value="${e.iscFiyat!=null?fnum(e.iscFiyat):''}" oninput="setPrice('${f.id}','${e.id}','iscFiyat',this.value)"><em>₺</em></div></div>
+              <div class="tbox"><div class="tw"><div class="tl">Toplam Fiyat :</div><div class="tv" id="t_${e.id}">${e.toplam!=null?fnum(e.toplam)+' ₺':'Fiyat'}</div></div>
+              <button class="btn green" onclick="calcTot('${f.id}','${e.id}')">Toplam Fiyat</button></div></div></div>`;
+            });
+            $('#app').innerHTML=h+'<div style="height:140px"></div></div>';
+            $('#fab').innerHTML=ic('check',32);
+            $('#fab').style.display='flex';
+            if(view.scrollLast&&f.entries.length){view.scrollLast=false;setTimeout(()=>window.scrollTo(0,document.body.scrollHeight),60)}
+          }
+          function setPrice(fid,eid,k,v){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            e[k]=pnum(v);e.toplam=null;save();
+            const t=$('#t_'+eid);if(t)t.textContent='Fiyat';
+          }
+          function calcTot(fid,eid){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            e.toplam=r2((e.malz.length?(e.malzFiyat||0):0)+(e.iscFiyat||0));
+            save();$('#t_'+eid).textContent=fnum(e.toplam)+' ₺';
+          }
+          function srch(v){
+            document.querySelectorAll('.entry').forEach(x=>x.classList.remove('hl'));
+            v=v.trim();if(!v)return;
+            const el=[...document.querySelectorAll('.entry')].find(x=>x.dataset.date.includes(v));
+            if(el){el.classList.add('hl');el.scrollIntoView({behavior:'smooth',block:'center'})}
+          }
+          function editEntry(fid,eid){
+            const e=getFile(fid).entries.find(x=>x.id===eid);
+            view.edit={fid,eid};openModal(entryFormHtml(e,'saveEdit'));
+          }
+          function saveEdit(){
+            const e=getFile(view.edit.fid).entries.find(x=>x.id===view.edit.eid);
+            Object.assign(e,readFormVals());
+            if(!e.malz.length)e.malzFiyat=null;
+            e.toplam=null;save();closeModal();render();
+          }
+          function delEntry(fid,eid){
+            if(!confirm('Bu madde silinsin mi?'))return;
+            const f=getFile(fid);f.entries=f.entries.filter(x=>x.id!==eid);save();render();
+          }
+
+          /* ===== Toplama ===== */
+          function startSum(){
+            openModal(`<h3>Tüm veriler toplansın mı?</h3><div class="row" style="margin-top:10px"><button class="btn green" onclick="doSum()">Toplansın</button><button class="btn ghost" onclick="closeModal()">İptal</button></div>`);
+          }
+          function doSum(){
+            const f=getFile(view.id);
+            if(!f.entries.length){closeModal();toast('Dosyada madde yok');return}
+            const lines=f.entries.map((e,i)=>({n:i+1,date:e.date,val:entryTotal(e)}));
+            const ts=f.entries.map(e=>e.ts);
+            const s={id:uid(),first:fdate(Math.min(...ts)),last:fdate(Math.max(...ts)),lines,total:r2(lines.reduce((a,l)=>a+l.val,0)),ts:Date.now()};
+            f.summaries=f.summaries||[];f.summaries.push(s);save();
+            closeModal();render();editSummary(f.id,s.id);
+          }
+          function editSummary(fid,sid){
+            const s=getFile(fid).summaries.find(x=>x.id===sid);
+            view.sum={fid,sid};
+            let h=`<h3>Toplama Formu</h3>
+            <label class="small">İlk veri tarihi</label><input id="s_first" value="${esc(s.first)}">
+            <label class="small">Son veri tarihi</label><input id="s_last" value="${esc(s.last)}">
+            <p class="small">Her maddenin toplam fiyatı (yalnızca bunlar toplanır, işçilik ve malzeme ayrıca eklenmez):</p>`;
+            s.lines.forEach((l,i)=>h+=`<div class="pr"><label style="min-width:112px">${l.n}) ${esc(l.date)}</label><div class="inw"><input inputmode="decimal" class="s_l" data-i="${i}" value="${fnum(l.val)}" oninput="sumRecalc()"><em>₺</em></div></div>`);
+            h+=`<label class="small">Toplam fiyat</label><div class="inw"><input id="s_total" value="${fnum(s.total)}" style="font-weight:800;font-size:20px"><em style="top:13px">₺</em></div>
+            <div class="row" style="margin-top:14px"><button class="btn green" onclick="saveSum()">Kaydet</button><button class="btn red" onclick="delSum()">Formu sil</button><button class="btn ghost" onclick="closeModal()">Kapat</button></div>`;
+            openModal(h);
+          }
+          function sumRecalc(){
+            let t=0;document.querySelectorAll('.s_l').forEach(i=>t+=pnum(i.value)||0);
+            $('#s_total').value=fnum(r2(t));
+          }
+          function saveSum(){
+            const s=getFile(view.sum.fid).summaries.find(x=>x.id===view.sum.sid);
+            s.first=$('#s_first').value;s.last=$('#s_last').value;
+            document.querySelectorAll('.s_l').forEach(i=>s.lines[i.dataset.i].val=pnum(i.value)||0);
+            s.total=pnum($('#s_total').value)||0;
+            save();closeModal();render();
+          }
+          function delSum(){
+            if(!confirm('Form silinsin mi?'))return;
+            const f=getFile(view.sum.fid);f.summaries=f.summaries.filter(x=>x.id!==view.sum.sid);save();closeModal();render();
+          }
+
+          /* sürüklenebilir buton */
+          (function(){
+            const b=$('#fab');let sx,sy,ox,oy,moved=false,drag=false;
+            b.addEventListener('pointerdown',e=>{drag=true;moved=false;sx=e.clientX;sy=e.clientY;const r=b.getBoundingClientRect();ox=r.left;oy=r.top;b.setPointerCapture(e.pointerId)});
+            b.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>6)moved=true;
+              if(moved){b.style.left=Math.max(0,Math.min(innerWidth-64,ox+dx))+'px';b.style.top=Math.max(0,Math.min(innerHeight-64,oy+dy))+'px';b.style.right='auto';b.style.bottom='auto'}});
+            b.addEventListener('pointerup',()=>{drag=false;if(!moved)startSum()});
+          })();
+
+          /* ===== Hesap makinesi ===== */
+          let ex='',last='';
+          function renderCalc(){
+            const keys=['C','⌫','(',')','7','8','9','÷','4','5','6','×','1','2','3','−','0','.','=','+'];
+            let h=topbar('Hesap Makinesi')+`<div class="wrap">
+            <div id="disp"><small id="dl">${esc(last)}</small><span class="v" id="dv">${esc(ex||'0')}</span></div><div class="calc">`;
+            keys.forEach(k=>{const c=k==='='?'eq':k==='C'||k==='⌫'?'cl':'÷×−+'.includes(k)?'op':'';h+=`<button class="${c}" onclick="ck('${k}')">${k}</button>`});
+            h+=`</div><div class="row" style="margin:22px 0 10px"><b style="font-size:18px;flex:1">Geçmiş</b>${S.calc.length?`<button class="btn red" onclick="if(confirm('Tüm geçmiş silinsin mi?')){S.calc=[];save();render()}">Tümünü sil</button>`:''}</div>`;
+            if(!S.calc.length)h+='<p class="small">Henüz işlem yok.</p>';
+            S.calc.slice().reverse().forEach(c=>h+=`<div class="card row" style="padding:12px 14px;margin-bottom:10px"><div style="flex:1">${esc(c.e)} = <b>${esc(c.r)}</b></div><button class="sbtn d" onclick="delCalc('${c.id}')">${ic('trash',18)}</button></div>`);
+            $('#app').innerHTML=h+'</div>';
+          }
+          function upd(){$('#dv').textContent=ex||'0';$('#dl').textContent=last}
+          function ck(k){
+            if(k==='C'){ex='';last=''}
+            else if(k==='⌫')ex=ex.slice(0,-1);
+            else if(k==='='){
+              if(!ex)return;
+              try{
+                const js=ex.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');
+                if(!/^[0-9+\-*/.() ]+$/.test(js))throw 0;
+                let r=Function('"use strict";return ('+js+')')();
+                if(!isFinite(r))throw 0;
+                r=Math.round(r*1e10)/1e10;
+                S.calc.push({id:uid(),e:ex,r:String(r)});save();
+                last=ex+' =';ex=String(r);renderCalc();return;
+              }catch(e){last='Hata';ex=''}
+            }else ex+=k;
+            upd();
+          }
+          function delCalc(id){S.calc=S.calc.filter(c=>c.id!==id);save();renderCalc()}
+
+          render();
+          </script>
+          </body>
+          </html>
+          HTMLEOF
+          npm init -y
+          npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/filesystem
+          npx cap init "TCDD Asistani" com.tcdd.asistan --web-dir www
+          npx cap add android
+          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <application|' android/app/src/main/AndroidManifest.xml
+          sed -i 's|<uses-permission android:name="android.permission.CAMERA" />|<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />|' android/app/src/main/AndroidManifest.xml
+          npx cap sync android
+
+      - name: APK derle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TCDD-Asistani-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
